@@ -1,0 +1,11 @@
+# Binaries
+rawsound
+
+# IDEs
+.idea/
+.DS_Store
+
+# Build artifacts
+*.o
+*.pch
+cmake-build-debug/

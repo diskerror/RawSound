@@ -1,0 +1,43 @@
+body {
+    background-color: #faedd2;
+    background-image:bg-beige-16x12.jpg ;
+    background-repeat: repeat;
+    color: #332244;
+    text-align: center;
+}
+
+a {
+    color: #2222cc;
+}
+
+a:active {
+    color: #22cc22;
+}
+
+a:visited {
+    color: #222266;
+}
+
+table {
+    margin: 16px auto;
+    border: 0;
+    border-collapse: collapse;
+}
+
+td {
+    padding: 30px;
+}
+
+.sample td {
+    padding: 16px;
+}
+
+.purp {
+    background-color: #666699;
+    vertical-align: text-top;
+}
+
+.foot {
+    margin-top: 36px;
+    font-size: x-small;
+}
