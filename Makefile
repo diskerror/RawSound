@@ -4,52 +4,65 @@ APP = rawsound
 # Detect Operating System
 UNAME_S := $(shell uname -s)
 
+# Language standard
+STD = c++20
+
 # Boost version
-BOOSTV = 1.81
+BOOSTV = 1.88
+
+# Precompiled header
+PCH_SRC = precompile.h
+PCH_OUT = precompile.gch
 
 ifeq ($(UNAME_S),Darwin)
 	# macOS Configuration (MacPorts)
-	# Compiler (not clang, alias to gcc-mp-15)
-	CC = g++ -std=c++17 -Wall -Wextra -Winvalid-pch -Wno-macro-redefined
-
-	CXXFLAGS = -I/opt/local/libexec/gcc15/libc++/include \
+	CXX = g++-mp-15
+	CXXFLAGS = -std=$(STD) -Wall -Wextra -Winvalid-pch -Wno-macro-redefined \
+		-I/opt/local/libexec/gcc15/libc++/include \
 		-I/opt/local/libexec/boost/$(BOOSTV)/include \
 		-I/opt/local/include
 
-	LDFLAGS = -lz -lpthread -L/opt/local/libexec/boost/$(BOOSTV)/lib -L/opt/local/lib -lssl -lcrypto
+	LDFLAGS = -L/opt/local/libexec/boost/$(BOOSTV)/lib \
+		-L/opt/local/lib \
+		-lz -lpthread -lssl -lcrypto
 else
 	# Debian 13 / Linux Configuration
-	# Standard GCC
-	CC = g++ -std=c++17 -Wall -Wextra
+	CXX = g++
+	CXXFLAGS = -std=$(STD) -Wall -Wextra -Winvalid-pch \
+		-I/usr/include
 
-	# Standard include paths (usually /usr/include)
-	CXXFLAGS = 
-
-	# Link against zlib and pthread (often needed for Boost/Crow on Linux)
-	LDFLAGS = -lz -lpthread -lssl -lcrypto
+	LDFLAGS = -L/usr/lib \
+		-lz -lpthread -lssl -lcrypto -ldl -lboost_system
 endif
 
-SRCS=$(wildcard *.cpp)
-HDRS=$(wildcard *.h)
+SRCS = $(wildcard *.cp)
+HDRS = $(wildcard *.hh *.h)
 
-.PHONY: all test clean pre
+.PHONY: all clean pre test debug release
 
-all: $(APP)
+all: release
+
+debug: OPTFLAGS = -O0 -g
+debug: $(APP)
+
+release: OPTFLAGS = -O3 -DNDEBUG
+release: $(APP)
 
 # Create Precompiled Header
-precompile.pch: precompile.hh
-	@rm -f $@
-	$(CC) -O3 $(CXXFLAGS) -x c++-header $< -o $@
+$(PCH_OUT): $(PCH_SRC) $(HDRS)
+	$(CXX) $(CXXFLAGS) $(OPTFLAGS) -x c++-header $< -o $@
 
-$(APP): $(SRCS) $(HDRS) Makefile precompile.pch
-	@rm -f $(APP)
-	$(CC) -O1 $(CXXFLAGS) $(LDFLAGS) $(SRCS) -o $@
+# Build application using precompiled header
+$(APP): $(SRCS) $(HDRS) $(PCH_OUT) Makefile
+	$(CXX) $(CXXFLAGS) $(OPTFLAGS) -include $(PCH_SRC) $(SRCS) $(LDFLAGS) -o $@
 
-pre:
-	precompile.pch
+# Build just the precompiled header (uses release flags)
+pre: OPTFLAGS = -O3 -DNDEBUG
+pre: $(PCH_OUT)
+	@echo "Precompiled header built: $(PCH_OUT)"
 
 clean:
-	@rm -f *.o $(APP)
+	rm -f $(APP) $(PCH_OUT) *.o
 
 test: $(APP)
 	./$(APP)

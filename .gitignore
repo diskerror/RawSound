@@ -7,5 +7,6 @@ rawsound
 
 # Build artifacts
 *.o
-*.pch
+*.gch
 cmake-build-debug/
+*.dSYM

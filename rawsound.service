@@ -6,7 +6,25 @@ After=syslog.target network-online.target
 
 [Service]
 Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/rawsound
 ExecStart=/var/www/rawsound/rawsound
+
+# Allow binding to privileged ports (80, 443) without root
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadOnlyPaths=/etc/letsencrypt
+
+# Allow write access only where needed (none currently)
+ReadWritePaths=/var/www/rawsound/static
+
 Restart=on-failure
 RestartSec=10
 KillMode=process

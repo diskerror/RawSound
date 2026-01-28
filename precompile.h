@@ -1,10 +1,6 @@
-//
-// Created by Reid Woodbury Jr on 1/25/26.
-//
 
-#ifndef DISKERROR_PRECOMPILE_H
-#define DISKERROR_PRECOMPILE_H
-
+#ifndef RAWSOUND_PRECOMPILE_HH
+#define RAWSOUND_PRECOMPILE_HH
 
 #define CROW_USE_BOOST
 #define CROW_DISABLE_STATIC_DIR
@@ -14,8 +10,10 @@
 
 #include "crow_all.h"
 
+#include <filesystem>
+#include <format>
 #include <iostream>
 #include <string>
-#include <filesystem>
+#include <string_view>
 
-#endif //DISKERROR_PRECOMPILE_H
+#endif // RAWSOUND_PRECOMPILE_HH
