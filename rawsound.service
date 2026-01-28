@@ -22,8 +22,8 @@ ProtectHome=yes
 PrivateTmp=yes
 ReadOnlyPaths=/etc/letsencrypt
 
-# Allow write access only where needed (none currently)
-ReadWritePaths=/var/www/rawsound/static
+# Allow read access to static files directory
+ReadOnlyPaths=/var/www/rawsound/static
 
 Restart=on-failure
 RestartSec=10
