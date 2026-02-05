@@ -1,4 +1,4 @@
-#include "precompile.hh"
+#include "precompile.h"
 
 constexpr std::string_view HOST       = "rawsound.com";
 constexpr std::string_view CERT_CHAIN = "/etc/letsencrypt/live/rawsound.com/fullchain.pem";
@@ -14,6 +14,9 @@ int main() {
 	// HTTP: Redirect all traffic to HTTPS
 	CROW_ROUTE(app_http, "/<path>")(
 		[](const std::string& path) {
+			if (path.find("..") != std::string::npos) {
+				return crow::response(400);
+			}
 			auto location = std::format("https://{}/{}", HOST, path);
 			crow::response res(301);
 			res.add_header("Location", location);
@@ -39,6 +42,11 @@ int main() {
 
 	CROW_ROUTE(app_https, "/<path>")(
 		[](crow::response& res, const std::string& path) {
+			if (path.find("..") != std::string::npos) {
+				res.code = 400;
+				res.end();
+				return;
+			}
 			auto filepath = std::format("static/{}", path);
 			res.set_static_file_info(filepath);
 			res.end();
@@ -46,6 +54,7 @@ int main() {
 
 	CROW_CATCHALL_ROUTE(app_https)(
 		[](crow::response& res) {
+			res.code = 404;
 			res.end();
 		});
 
