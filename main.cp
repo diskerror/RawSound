@@ -1,6 +1,7 @@
 #include "precompile.h"
 
 constexpr std::string_view HOST       = "rawsound.com";
+constexpr std::string_view WEB_ROOT   = "/var/www/rawsound/static/";
 constexpr std::string_view CERT_CHAIN = "/etc/letsencrypt/live/rawsound.com/fullchain.pem";
 constexpr std::string_view CERT_KEY   = "/etc/letsencrypt/live/rawsound.com/privkey.pem";
 
@@ -13,11 +14,11 @@ int main() {
 
 	// HTTP: Redirect all traffic to HTTPS
 	CROW_ROUTE(app_http, "/<path>")(
-		[](const std::string& path) {
+		[](const std::string &path) {
 			if (path.find("..") != std::string::npos) {
 				return crow::response(400);
 			}
-			auto location = std::format("https://{}/{}", HOST, path);
+			auto           location = std::format("https://{}/{}", HOST, path);
 			crow::response res(301);
 			res.add_header("Location", location);
 			return res;
@@ -25,7 +26,7 @@ int main() {
 
 	CROW_CATCHALL_ROUTE(app_http)(
 		[]() {
-			auto location = std::format("https://{}/", HOST);
+			auto           location = std::format("https://{}/", HOST);
 			crow::response res(301);
 			res.add_header("Location", location);
 			return res;
@@ -35,25 +36,26 @@ int main() {
 	app_https.use_compression(crow::compression::algorithm::GZIP);
 
 	CROW_ROUTE(app_https, "/")(
-		[](crow::response& res) {
-			res.set_static_file_info("static/index.html");
+		[](crow::response &res) {
+			res.set_static_file_info_unsafe(std::string{WEB_ROOT} + "index.html");
 			res.end();
 		});
 
 	CROW_ROUTE(app_https, "/<path>")(
-		[](crow::response& res, const std::string& path) {
+		[](crow::response &res, const std::string &path) {
 			if (path.find("..") != std::string::npos) {
 				res.code = 400;
 				res.end();
 				return;
 			}
-			auto filepath = std::format("static/{}", path);
-			res.set_static_file_info(filepath);
+			std::string fixablePath = path;
+			crow::utility::sanitize_filename(fixablePath);
+			res.set_static_file_info_unsafe(std::string{WEB_ROOT} + fixablePath);
 			res.end();
 		});
 
 	CROW_CATCHALL_ROUTE(app_https)(
-		[](crow::response& res) {
+		[](crow::response &res) {
 			res.code = 404;
 			res.end();
 		});
@@ -67,7 +69,7 @@ int main() {
 	}
 
 	// Start servers
-	auto http_future = app_http.concurrency(2).run_async();
+	auto http_future  = app_http.concurrency(2).run_async();
 	auto https_future = app_https.concurrency(4).run_async();
 
 	app_http.wait_for_server_start();

@@ -16,8 +16,9 @@ PCH_OUT = precompile.gch
 
 ifeq ($(UNAME_S),Darwin)
 	# macOS Configuration (MacPorts)
-	CXX = g++-mp-15
+	CXX = clang++
 	CXXFLAGS = -std=$(STD) -Wall -Wextra -Winvalid-pch -Wno-macro-redefined \
+		-I../Crow/include \
 		-I/opt/local/libexec/gcc15/libc++/include \
 		-I/opt/local/libexec/boost/$(BOOSTV)/include \
 		-I/opt/local/include

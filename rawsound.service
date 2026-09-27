@@ -1,5 +1,5 @@
 [Unit]
-Description=RawSound website
+Description=RAWSound website
 
 Wants=network.target
 After=syslog.target network-online.target

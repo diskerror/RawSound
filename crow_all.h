@@ -33,324 +33,144 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 The Crow logo and other graphic material (excluding third party logos) used are under exclusive Copyright (c) 2021-2022, Farook Al-Sammarraie (The-EDev), All rights reserved.
 */
 #pragma once
-#ifdef CROW_ENABLE_COMPRESSION
-
+// This file is generated from nginx/conf/mime.types using nginx_mime2cpp.py on 2021-12-03.
+#include <unordered_map>
 #include <string>
-#include <zlib.h>
-
-// http://zlib.net/manual.html
-namespace crow // NOTE: Already documented in "crow/app.h"
-{
-    namespace compression
-    {
-        // Values used in the 'windowBits' parameter for deflateInit2.
-        enum algorithm
-        {
-            // 15 is the default value for deflate
-            DEFLATE = 15,
-            // windowBits can also be greater than 15 for optional gzip encoding.
-            // Add 16 to windowBits to write a simple gzip header and trailer around the compressed data instead of a zlib wrapper.
-            GZIP = 15 | 16,
-        };
-
-        inline std::string compress_string(std::string const& str, algorithm algo)
-        {
-            std::string compressed_str;
-            z_stream stream{};
-            // Initialize with the default values
-            if (::deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, algo, 8, Z_DEFAULT_STRATEGY) == Z_OK)
-            {
-                char buffer[8192];
-
-                stream.avail_in = str.size();
-                // zlib does not take a const pointer. The data is not altered.
-                stream.next_in = const_cast<Bytef*>(reinterpret_cast<const Bytef*>(str.c_str()));
-
-                int code = Z_OK;
-                do
-                {
-                    stream.avail_out = sizeof(buffer);
-                    stream.next_out = reinterpret_cast<Bytef*>(&buffer[0]);
-
-                    code = ::deflate(&stream, Z_FINISH);
-                    // Successful and non-fatal error code returned by deflate when used with Z_FINISH flush
-                    if (code == Z_OK || code == Z_STREAM_END)
-                    {
-                        std::copy(&buffer[0], &buffer[sizeof(buffer) - stream.avail_out], std::back_inserter(compressed_str));
-                    }
-
-                } while (code == Z_OK);
-
-                if (code != Z_STREAM_END)
-                    compressed_str.clear();
-
-                ::deflateEnd(&stream);
-            }
-
-            return compressed_str;
-        }
-
-        inline std::string decompress_string(std::string const& deflated_string)
-        {
-            std::string inflated_string;
-            Bytef tmp[8192];
-
-            z_stream zstream{};
-            zstream.avail_in = deflated_string.size();
-            // Nasty const_cast but zlib won't alter its contents
-            zstream.next_in = const_cast<Bytef*>(reinterpret_cast<Bytef const*>(deflated_string.c_str()));
-            // Initialize with automatic header detection, for gzip support
-            if (::inflateInit2(&zstream, MAX_WBITS | 32) == Z_OK)
-            {
-                do
-                {
-                    zstream.avail_out = sizeof(tmp);
-                    zstream.next_out = &tmp[0];
-
-                    auto ret = ::inflate(&zstream, Z_NO_FLUSH);
-                    if (ret == Z_OK || ret == Z_STREAM_END)
-                    {
-                        std::copy(&tmp[0], &tmp[sizeof(tmp) - zstream.avail_out], std::back_inserter(inflated_string));
-                    }
-                    else
-                    {
-                        // Something went wrong with inflate; make sure we return an empty string
-                        inflated_string.clear();
-                        break;
-                    }
-
-                } while (zstream.avail_out == 0);
-
-                // Free zlib's internal memory
-                ::inflateEnd(&zstream);
-            }
-
-            return inflated_string;
-        }
-    } // namespace compression
-} // namespace crow
-
-#endif
-
 
 namespace crow
 {
-    constexpr const char VERSION[] = "master";
+    const std::unordered_map<std::string, std::string> mime_types{
+      {"gz", "application/gzip"},
+      {"shtml", "text/html"},
+      {"htm", "text/html"},
+      {"html", "text/html"},
+      {"css", "text/css"},
+      {"xml", "text/xml"},
+      {"gif", "image/gif"},
+      {"jpg", "image/jpeg"},
+      {"jpeg", "image/jpeg"},
+      {"js", "application/javascript"},
+      {"atom", "application/atom+xml"},
+      {"rss", "application/rss+xml"},
+      {"mml", "text/mathml"},
+      {"txt", "text/plain"},
+      {"jad", "text/vnd.sun.j2me.app-descriptor"},
+      {"wml", "text/vnd.wap.wml"},
+      {"htc", "text/x-component"},
+      {"avif", "image/avif"},
+      {"png", "image/png"},
+      {"svgz", "image/svg+xml"},
+      {"svg", "image/svg+xml"},
+      {"tiff", "image/tiff"},
+      {"tif", "image/tiff"},
+      {"wbmp", "image/vnd.wap.wbmp"},
+      {"webp", "image/webp"},
+      {"ico", "image/x-icon"},
+      {"jng", "image/x-jng"},
+      {"bmp", "image/x-ms-bmp"},
+      {"woff", "font/woff"},
+      {"woff2", "font/woff2"},
+      {"ear", "application/java-archive"},
+      {"war", "application/java-archive"},
+      {"jar", "application/java-archive"},
+      {"json", "application/json"},
+      {"hqx", "application/mac-binhex40"},
+      {"doc", "application/msword"},
+      {"pdf", "application/pdf"},
+      {"ai", "application/postscript"},
+      {"eps", "application/postscript"},
+      {"ps", "application/postscript"},
+      {"rtf", "application/rtf"},
+      {"m3u8", "application/vnd.apple.mpegurl"},
+      {"kml", "application/vnd.google-earth.kml+xml"},
+      {"kmz", "application/vnd.google-earth.kmz"},
+      {"xls", "application/vnd.ms-excel"},
+      {"eot", "application/vnd.ms-fontobject"},
+      {"ppt", "application/vnd.ms-powerpoint"},
+      {"odg", "application/vnd.oasis.opendocument.graphics"},
+      {"odp", "application/vnd.oasis.opendocument.presentation"},
+      {"ods", "application/vnd.oasis.opendocument.spreadsheet"},
+      {"odt", "application/vnd.oasis.opendocument.text"},
+      {"pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+      {"xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+      {"docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+      {"wmlc", "application/vnd.wap.wmlc"},
+      {"wasm", "application/wasm"},
+      {"7z", "application/x-7z-compressed"},
+      {"cco", "application/x-cocoa"},
+      {"jardiff", "application/x-java-archive-diff"},
+      {"jnlp", "application/x-java-jnlp-file"},
+      {"run", "application/x-makeself"},
+      {"pm", "application/x-perl"},
+      {"pl", "application/x-perl"},
+      {"pdb", "application/x-pilot"},
+      {"prc", "application/x-pilot"},
+      {"rar", "application/x-rar-compressed"},
+      {"rpm", "application/x-redhat-package-manager"},
+      {"sea", "application/x-sea"},
+      {"swf", "application/x-shockwave-flash"},
+      {"sit", "application/x-stuffit"},
+      {"tk", "application/x-tcl"},
+      {"tcl", "application/x-tcl"},
+      {"crt", "application/x-x509-ca-cert"},
+      {"pem", "application/x-x509-ca-cert"},
+      {"der", "application/x-x509-ca-cert"},
+      {"xpi", "application/x-xpinstall"},
+      {"xhtml", "application/xhtml+xml"},
+      {"xspf", "application/xspf+xml"},
+      {"zip", "application/zip"},
+      {"dll", "application/octet-stream"},
+      {"exe", "application/octet-stream"},
+      {"bin", "application/octet-stream"},
+      {"deb", "application/octet-stream"},
+      {"dmg", "application/octet-stream"},
+      {"img", "application/octet-stream"},
+      {"iso", "application/octet-stream"},
+      {"msm", "application/octet-stream"},
+      {"msp", "application/octet-stream"},
+      {"msi", "application/octet-stream"},
+      {"kar", "audio/midi"},
+      {"midi", "audio/midi"},
+      {"mid", "audio/midi"},
+      {"mp3", "audio/mpeg"},
+      {"ogg", "audio/ogg"},
+      {"m4a", "audio/x-m4a"},
+      {"ra", "audio/x-realaudio"},
+      {"3gp", "video/3gpp"},
+      {"3gpp", "video/3gpp"},
+      {"ts", "video/mp2t"},
+      {"mp4", "video/mp4"},
+      {"mpg", "video/mpeg"},
+      {"mpeg", "video/mpeg"},
+      {"mov", "video/quicktime"},
+      {"webm", "video/webm"},
+      {"flv", "video/x-flv"},
+      {"m4v", "video/x-m4v"},
+      {"mng", "video/x-mng"},
+      {"asf", "video/x-ms-asf"},
+      {"asx", "video/x-ms-asf"},
+      {"wmv", "video/x-ms-wmv"},
+      {"avi", "video/x-msvideo"}};
 }
 
-/*
- * SHA1 Wikipedia Page: http://en.wikipedia.org/wiki/SHA-1
- *
- * Copyright (c) 2012-22 SAURAV MOHAPATRA <mohaps@gmail.com>
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
 
-/**
- * \file TinySHA1.hpp
- * \author SAURAV MOHAPATRA <mohaps@gmail.com>
- * \date 2012-22
- * \brief TinySHA1 - a header only implementation of the SHA1 algorithm in C++. Based
- * on the implementation in boost::uuid::details.
- *
- * In this file are defined:
- * - sha1::SHA1
- */
-#ifndef _TINY_SHA1_HPP_
-#define _TINY_SHA1_HPP_
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <stdint.h>
+#include <string>
 
-/**
- * \namespace sha1
- * \brief Here is defined the SHA1 class
- */
-namespace sha1
+namespace crow
 {
-    /**
-     * \class SHA1
-     * \brief A tiny SHA1 algorithm implementation used internally in the
-     * Crow server (specifically in crow/websocket.h).
-     */
-    class SHA1
+    /// An abstract class that allows any other class to be returned by a handler.
+    struct returnable
     {
-    public:
-        typedef uint32_t digest32_t[5];
-        typedef uint8_t digest8_t[20];
-        inline static uint32_t LeftRotate(uint32_t value, size_t count) {
-            return (value << count) ^ (value >> (32-count));
-        }
-        SHA1(){ reset(); }
-        virtual ~SHA1() {}
-        SHA1(const SHA1& s) { *this = s; }
-        const SHA1& operator = (const SHA1& s) {
-            memcpy(m_digest, s.m_digest, 5 * sizeof(uint32_t));
-            memcpy(m_block, s.m_block, 64);
-            m_blockByteIndex = s.m_blockByteIndex;
-            m_byteCount = s.m_byteCount;
-            return *this;
-        }
-        SHA1& reset() {
-            m_digest[0] = 0x67452301;
-            m_digest[1] = 0xEFCDAB89;
-            m_digest[2] = 0x98BADCFE;
-            m_digest[3] = 0x10325476;
-            m_digest[4] = 0xC3D2E1F0;
-            m_blockByteIndex = 0;
-            m_byteCount = 0;
-            return *this;
-        }
-        SHA1& processByte(uint8_t octet) {
-            this->m_block[this->m_blockByteIndex++] = octet;
-            ++this->m_byteCount;
-            if(m_blockByteIndex == 64) {
-                this->m_blockByteIndex = 0;
-                processBlock();
-            }
-            return *this;
-        }
-        SHA1& processBlock(const void* const start, const void* const end) {
-            const uint8_t* begin = static_cast<const uint8_t*>(start);
-            const uint8_t* finish = static_cast<const uint8_t*>(end);
-            while(begin != finish) {
-                processByte(*begin);
-                begin++;
-            }
-            return *this;
-        }
-        SHA1& processBytes(const void* const data, size_t len) {
-            const uint8_t* block = static_cast<const uint8_t*>(data);
-            processBlock(block, block + len);
-            return *this;
-        }
-        const uint32_t* getDigest(digest32_t digest) {
-            size_t bitCount = this->m_byteCount * 8;
-            processByte(0x80);
-            if (this->m_blockByteIndex > 56) {
-                while (m_blockByteIndex != 0) {
-                    processByte(0);
-                }
-                while (m_blockByteIndex < 56) {
-                    processByte(0);
-                }
-            } else {
-                while (m_blockByteIndex < 56) {
-                    processByte(0);
-                }
-            }
-            processByte(0);
-            processByte(0);
-            processByte(0);
-            processByte(0);
-            processByte( static_cast<unsigned char>((bitCount>>24) & 0xFF));
-            processByte( static_cast<unsigned char>((bitCount>>16) & 0xFF));
-            processByte( static_cast<unsigned char>((bitCount>>8 ) & 0xFF));
-            processByte( static_cast<unsigned char>((bitCount)     & 0xFF));
+        std::string content_type;
+        virtual std::string dump() const = 0;
 
-            memcpy(digest, m_digest, 5 * sizeof(uint32_t));
-            return digest;
-        }
-        const uint8_t* getDigestBytes(digest8_t digest) {
-            digest32_t d32;
-            getDigest(d32);
-            size_t di = 0;
-            digest[di++] = ((d32[0] >> 24) & 0xFF);
-            digest[di++] = ((d32[0] >> 16) & 0xFF);
-            digest[di++] = ((d32[0] >> 8) & 0xFF);
-            digest[di++] = ((d32[0]) & 0xFF);
+        returnable(std::string ctype):
+          content_type{ctype}
+        {}
 
-            digest[di++] = ((d32[1] >> 24) & 0xFF);
-            digest[di++] = ((d32[1] >> 16) & 0xFF);
-            digest[di++] = ((d32[1] >> 8) & 0xFF);
-            digest[di++] = ((d32[1]) & 0xFF);
-
-            digest[di++] = ((d32[2] >> 24) & 0xFF);
-            digest[di++] = ((d32[2] >> 16) & 0xFF);
-            digest[di++] = ((d32[2] >> 8) & 0xFF);
-            digest[di++] = ((d32[2]) & 0xFF);
-
-            digest[di++] = ((d32[3] >> 24) & 0xFF);
-            digest[di++] = ((d32[3] >> 16) & 0xFF);
-            digest[di++] = ((d32[3] >> 8) & 0xFF);
-            digest[di++] = ((d32[3]) & 0xFF);
-
-            digest[di++] = ((d32[4] >> 24) & 0xFF);
-            digest[di++] = ((d32[4] >> 16) & 0xFF);
-            digest[di++] = ((d32[4] >> 8) & 0xFF);
-            digest[di++] = ((d32[4]) & 0xFF);
-            return digest;
-        }
-
-    protected:
-        void processBlock() {
-            uint32_t w[80];
-            for (size_t i = 0; i < 16; i++) {
-                w[i]  = (m_block[i*4 + 0] << 24);
-                w[i] |= (m_block[i*4 + 1] << 16);
-                w[i] |= (m_block[i*4 + 2] << 8);
-                w[i] |= (m_block[i*4 + 3]);
-            }
-            for (size_t i = 16; i < 80; i++) {
-                w[i] = LeftRotate((w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16]), 1);
-            }
-
-            uint32_t a = m_digest[0];
-            uint32_t b = m_digest[1];
-            uint32_t c = m_digest[2];
-            uint32_t d = m_digest[3];
-            uint32_t e = m_digest[4];
-
-            for (std::size_t i=0; i<80; ++i) {
-                uint32_t f = 0;
-                uint32_t k = 0;
-
-                if (i<20) {
-                    f = (b & c) | (~b & d);
-                    k = 0x5A827999;
-                } else if (i<40) {
-                    f = b ^ c ^ d;
-                    k = 0x6ED9EBA1;
-                } else if (i<60) {
-                    f = (b & c) | (b & d) | (c & d);
-                    k = 0x8F1BBCDC;
-                } else {
-                    f = b ^ c ^ d;
-                    k = 0xCA62C1D6;
-                }
-                uint32_t temp = LeftRotate(a, 5) + f + e + k + w[i];
-                e = d;
-                d = c;
-                c = LeftRotate(b, 30);
-                b = a;
-                a = temp;
-            }
-
-            m_digest[0] += a;
-            m_digest[1] += b;
-            m_digest[2] += c;
-            m_digest[3] += d;
-            m_digest[4] += e;
-        }
-    private:
-        digest32_t m_digest;
-        uint8_t m_block[64];
-        size_t m_blockByteIndex;
-        size_t m_byteCount;
+        virtual ~returnable(){}
     };
-}
-#endif
+} // namespace crow
 
 
 #include <stdio.h>
@@ -598,28 +418,28 @@ inline std::unique_ptr<std::pair<std::string, std::string>> qs_dict_name2kv(cons
 
 inline char * qs_scanvalue(const char * key, const char * qs, char * val, size_t val_len)
 {
-    size_t i, key_len;
-    const char * tmp;
+    const char * tmp= strchr(qs, '?');
 
     // find the beginning of the k/v substrings
-    if ( (tmp = strchr(qs, '?')) != NULL )
+    if ( tmp != nullptr )
         qs = tmp + 1;
 
-    key_len = strlen(key);
-    while(qs[0] != '#' && qs[0] != '\0')
+    const size_t key_len = strlen(key);
+    while(*qs != '#' && *qs != '\0')
     {
         if ( qs_strncmp(key, qs, key_len) == 0 )
             break;
-        qs += strcspn(qs, "&") + 1;
+        qs += strcspn(qs, "&");
+        if (*qs=='&') qs++;
     }
 
-    if ( qs[0] == '\0' ) return NULL;
+    if ( qs[0] == '\0' ) return nullptr;
 
     qs += strcspn(qs, "=&#");
     if ( qs[0] == '=' )
     {
         qs++;
-        i = strcspn(qs, "&=#");
+        size_t i = strcspn(qs, "&=#");
 #ifdef _MSC_VER
         strncpy_s(val, val_len, qs, (val_len - 1)<(i + 1) ? (val_len - 1) : (i + 1));
 #else
@@ -852,126 +672,332 @@ namespace crow
 
 } // namespace crow
 
-// This file is generated from nginx/conf/mime.types using nginx_mime2cpp.py on 2021-12-03.
-#include <unordered_map>
+#ifdef CROW_ENABLE_COMPRESSION
+
 #include <string>
+#include <zlib.h>
+
+// http://zlib.net/manual.html
+namespace crow // NOTE: Already documented in "crow/app.h"
+{
+    namespace compression
+    {
+        // Values used in the 'windowBits' parameter for deflateInit2.
+        enum algorithm
+        {
+            // 15 is the default value for deflate
+            DEFLATE = 15,
+            // windowBits can also be greater than 15 for optional gzip encoding.
+            // Add 16 to windowBits to write a simple gzip header and trailer around the compressed data instead of a zlib wrapper.
+            GZIP = 15 | 16,
+        };
+
+        inline std::string compress_string(std::string const& str, algorithm algo)
+        {
+            std::string compressed_str;
+            z_stream stream{};
+            // Initialize with the default values
+            if (::deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, algo, 8, Z_DEFAULT_STRATEGY) == Z_OK)
+            {
+                char buffer[8192];
+
+                stream.avail_in = str.size();
+                // zlib does not take a const pointer. The data is not altered.
+                stream.next_in = const_cast<Bytef*>(reinterpret_cast<const Bytef*>(str.c_str()));
+
+                int code = Z_OK;
+                do
+                {
+                    stream.avail_out = sizeof(buffer);
+                    stream.next_out = reinterpret_cast<Bytef*>(&buffer[0]);
+
+                    code = ::deflate(&stream, Z_FINISH);
+                    // Successful and non-fatal error code returned by deflate when used with Z_FINISH flush
+                    if (code == Z_OK || code == Z_STREAM_END)
+                    {
+                        std::copy(&buffer[0], &buffer[sizeof(buffer) - stream.avail_out], std::back_inserter(compressed_str));
+                    }
+
+                } while (code == Z_OK);
+
+                if (code != Z_STREAM_END)
+                    compressed_str.clear();
+
+                ::deflateEnd(&stream);
+            }
+
+            return compressed_str;
+        }
+
+        inline std::string decompress_string(std::string const& deflated_string)
+        {
+            std::string inflated_string;
+            Bytef tmp[8192];
+
+            z_stream zstream{};
+            zstream.avail_in = deflated_string.size();
+            // Nasty const_cast but zlib won't alter its contents
+            zstream.next_in = const_cast<Bytef*>(reinterpret_cast<Bytef const*>(deflated_string.c_str()));
+            // Initialize with automatic header detection, for gzip support
+            if (::inflateInit2(&zstream, MAX_WBITS | 32) == Z_OK)
+            {
+                do
+                {
+                    zstream.avail_out = sizeof(tmp);
+                    zstream.next_out = &tmp[0];
+
+                    auto ret = ::inflate(&zstream, Z_NO_FLUSH);
+                    if (ret == Z_OK || ret == Z_STREAM_END)
+                    {
+                        std::copy(&tmp[0], &tmp[sizeof(tmp) - zstream.avail_out], std::back_inserter(inflated_string));
+                    }
+                    else
+                    {
+                        // Something went wrong with inflate; make sure we return an empty string
+                        inflated_string.clear();
+                        break;
+                    }
+
+                } while (zstream.avail_out == 0);
+
+                // Free zlib's internal memory
+                ::inflateEnd(&zstream);
+            }
+
+            return inflated_string;
+        }
+    } // namespace compression
+} // namespace crow
+
+#endif
+
+/*
+ * SHA1 Wikipedia Page: http://en.wikipedia.org/wiki/SHA-1
+ *
+ * Copyright (c) 2012-22 SAURAV MOHAPATRA <mohaps@gmail.com>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/**
+ * \file TinySHA1.hpp
+ * \author SAURAV MOHAPATRA <mohaps@gmail.com>
+ * \date 2012-22
+ * \brief TinySHA1 - a header only implementation of the SHA1 algorithm in C++. Based
+ * on the implementation in boost::uuid::details.
+ *
+ * In this file are defined:
+ * - sha1::SHA1
+ */
+#ifndef _TINY_SHA1_HPP_
+#define _TINY_SHA1_HPP_
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <stdint.h>
+
+/**
+ * \namespace sha1
+ * \brief Here is defined the SHA1 class
+ */
+namespace sha1
+{
+    /**
+     * \class SHA1
+     * \brief A tiny SHA1 algorithm implementation used internally in the
+     * Crow server (specifically in crow/websocket.h).
+     */
+    class SHA1
+    {
+    public:
+        typedef uint32_t digest32_t[5];
+        typedef uint8_t digest8_t[20];
+        inline static uint32_t LeftRotate(uint32_t value, size_t count) {
+            return (value << count) ^ (value >> (32-count));
+        }
+        SHA1(){ reset(); }
+        virtual ~SHA1() {}
+        SHA1(const SHA1& s) { *this = s; }
+        const SHA1& operator = (const SHA1& s) {
+            memcpy(m_digest, s.m_digest, 5 * sizeof(uint32_t));
+            memcpy(m_block, s.m_block, 64);
+            m_blockByteIndex = s.m_blockByteIndex;
+            m_byteCount = s.m_byteCount;
+            return *this;
+        }
+        SHA1& reset() {
+            m_digest[0] = 0x67452301;
+            m_digest[1] = 0xEFCDAB89;
+            m_digest[2] = 0x98BADCFE;
+            m_digest[3] = 0x10325476;
+            m_digest[4] = 0xC3D2E1F0;
+            m_blockByteIndex = 0;
+            m_byteCount = 0;
+            return *this;
+        }
+        SHA1& processByte(uint8_t octet) {
+            this->m_block[this->m_blockByteIndex++] = octet;
+            ++this->m_byteCount;
+            if(m_blockByteIndex == 64) {
+                this->m_blockByteIndex = 0;
+                processBlock();
+            }
+            return *this;
+        }
+        SHA1& processBlock(const void* const start, const void* const end) {
+            const uint8_t* begin = static_cast<const uint8_t*>(start);
+            const uint8_t* finish = static_cast<const uint8_t*>(end);
+            while(begin != finish) {
+                processByte(*begin);
+                begin++;
+            }
+            return *this;
+        }
+        SHA1& processBytes(const void* const data, size_t len) {
+            const uint8_t* block = static_cast<const uint8_t*>(data);
+            processBlock(block, block + len);
+            return *this;
+        }
+        const uint32_t* getDigest(digest32_t digest) {
+            size_t bitCount = this->m_byteCount * 8;
+            processByte(0x80);
+            if (this->m_blockByteIndex > 56) {
+                while (m_blockByteIndex != 0) {
+                    processByte(0);
+                }
+                while (m_blockByteIndex < 56) {
+                    processByte(0);
+                }
+            } else {
+                while (m_blockByteIndex < 56) {
+                    processByte(0);
+                }
+            }
+            processByte(0);
+            processByte(0);
+            processByte(0);
+            processByte(0);
+            processByte( static_cast<unsigned char>((bitCount>>24) & 0xFF));
+            processByte( static_cast<unsigned char>((bitCount>>16) & 0xFF));
+            processByte( static_cast<unsigned char>((bitCount>>8 ) & 0xFF));
+            processByte( static_cast<unsigned char>((bitCount)     & 0xFF));
+
+            memcpy(digest, m_digest, 5 * sizeof(uint32_t));
+            return digest;
+        }
+        const uint8_t* getDigestBytes(digest8_t digest) {
+            digest32_t d32;
+            getDigest(d32);
+            size_t di = 0;
+            digest[di++] = ((d32[0] >> 24) & 0xFF);
+            digest[di++] = ((d32[0] >> 16) & 0xFF);
+            digest[di++] = ((d32[0] >> 8) & 0xFF);
+            digest[di++] = ((d32[0]) & 0xFF);
+
+            digest[di++] = ((d32[1] >> 24) & 0xFF);
+            digest[di++] = ((d32[1] >> 16) & 0xFF);
+            digest[di++] = ((d32[1] >> 8) & 0xFF);
+            digest[di++] = ((d32[1]) & 0xFF);
+
+            digest[di++] = ((d32[2] >> 24) & 0xFF);
+            digest[di++] = ((d32[2] >> 16) & 0xFF);
+            digest[di++] = ((d32[2] >> 8) & 0xFF);
+            digest[di++] = ((d32[2]) & 0xFF);
+
+            digest[di++] = ((d32[3] >> 24) & 0xFF);
+            digest[di++] = ((d32[3] >> 16) & 0xFF);
+            digest[di++] = ((d32[3] >> 8) & 0xFF);
+            digest[di++] = ((d32[3]) & 0xFF);
+
+            digest[di++] = ((d32[4] >> 24) & 0xFF);
+            digest[di++] = ((d32[4] >> 16) & 0xFF);
+            digest[di++] = ((d32[4] >> 8) & 0xFF);
+            digest[di++] = ((d32[4]) & 0xFF);
+            return digest;
+        }
+
+    protected:
+        void processBlock() {
+            uint32_t w[80];
+            for (size_t i = 0; i < 16; i++) {
+                w[i]  = (m_block[i*4 + 0] << 24);
+                w[i] |= (m_block[i*4 + 1] << 16);
+                w[i] |= (m_block[i*4 + 2] << 8);
+                w[i] |= (m_block[i*4 + 3]);
+            }
+            for (size_t i = 16; i < 80; i++) {
+                w[i] = LeftRotate((w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16]), 1);
+            }
+
+            uint32_t a = m_digest[0];
+            uint32_t b = m_digest[1];
+            uint32_t c = m_digest[2];
+            uint32_t d = m_digest[3];
+            uint32_t e = m_digest[4];
+
+            for (std::size_t i=0; i<80; ++i) {
+                uint32_t f = 0;
+                uint32_t k = 0;
+
+                if (i<20) {
+                    f = (b & c) | (~b & d);
+                    k = 0x5A827999;
+                } else if (i<40) {
+                    f = b ^ c ^ d;
+                    k = 0x6ED9EBA1;
+                } else if (i<60) {
+                    f = (b & c) | (b & d) | (c & d);
+                    k = 0x8F1BBCDC;
+                } else {
+                    f = b ^ c ^ d;
+                    k = 0xCA62C1D6;
+                }
+                uint32_t temp = LeftRotate(a, 5) + f + e + k + w[i];
+                e = d;
+                d = c;
+                c = LeftRotate(b, 30);
+                b = a;
+                a = temp;
+            }
+
+            m_digest[0] += a;
+            m_digest[1] += b;
+            m_digest[2] += c;
+            m_digest[3] += d;
+            m_digest[4] += e;
+        }
+    private:
+        digest32_t m_digest;
+        uint8_t m_block[64];
+        size_t m_blockByteIndex;
+        size_t m_byteCount;
+    };
+}
+#endif
+
+#include <stdexcept>
 
 namespace crow
 {
-    const std::unordered_map<std::string, std::string> mime_types{
-      {"gz", "application/gzip"},
-      {"shtml", "text/html"},
-      {"htm", "text/html"},
-      {"html", "text/html"},
-      {"css", "text/css"},
-      {"xml", "text/xml"},
-      {"gif", "image/gif"},
-      {"jpg", "image/jpeg"},
-      {"jpeg", "image/jpeg"},
-      {"js", "application/javascript"},
-      {"atom", "application/atom+xml"},
-      {"rss", "application/rss+xml"},
-      {"mml", "text/mathml"},
-      {"txt", "text/plain"},
-      {"jad", "text/vnd.sun.j2me.app-descriptor"},
-      {"wml", "text/vnd.wap.wml"},
-      {"htc", "text/x-component"},
-      {"avif", "image/avif"},
-      {"png", "image/png"},
-      {"svgz", "image/svg+xml"},
-      {"svg", "image/svg+xml"},
-      {"tiff", "image/tiff"},
-      {"tif", "image/tiff"},
-      {"wbmp", "image/vnd.wap.wbmp"},
-      {"webp", "image/webp"},
-      {"ico", "image/x-icon"},
-      {"jng", "image/x-jng"},
-      {"bmp", "image/x-ms-bmp"},
-      {"woff", "font/woff"},
-      {"woff2", "font/woff2"},
-      {"ear", "application/java-archive"},
-      {"war", "application/java-archive"},
-      {"jar", "application/java-archive"},
-      {"json", "application/json"},
-      {"hqx", "application/mac-binhex40"},
-      {"doc", "application/msword"},
-      {"pdf", "application/pdf"},
-      {"ai", "application/postscript"},
-      {"eps", "application/postscript"},
-      {"ps", "application/postscript"},
-      {"rtf", "application/rtf"},
-      {"m3u8", "application/vnd.apple.mpegurl"},
-      {"kml", "application/vnd.google-earth.kml+xml"},
-      {"kmz", "application/vnd.google-earth.kmz"},
-      {"xls", "application/vnd.ms-excel"},
-      {"eot", "application/vnd.ms-fontobject"},
-      {"ppt", "application/vnd.ms-powerpoint"},
-      {"odg", "application/vnd.oasis.opendocument.graphics"},
-      {"odp", "application/vnd.oasis.opendocument.presentation"},
-      {"ods", "application/vnd.oasis.opendocument.spreadsheet"},
-      {"odt", "application/vnd.oasis.opendocument.text"},
-      {"pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
-      {"xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
-      {"docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
-      {"wmlc", "application/vnd.wap.wmlc"},
-      {"wasm", "application/wasm"},
-      {"7z", "application/x-7z-compressed"},
-      {"cco", "application/x-cocoa"},
-      {"jardiff", "application/x-java-archive-diff"},
-      {"jnlp", "application/x-java-jnlp-file"},
-      {"run", "application/x-makeself"},
-      {"pm", "application/x-perl"},
-      {"pl", "application/x-perl"},
-      {"pdb", "application/x-pilot"},
-      {"prc", "application/x-pilot"},
-      {"rar", "application/x-rar-compressed"},
-      {"rpm", "application/x-redhat-package-manager"},
-      {"sea", "application/x-sea"},
-      {"swf", "application/x-shockwave-flash"},
-      {"sit", "application/x-stuffit"},
-      {"tk", "application/x-tcl"},
-      {"tcl", "application/x-tcl"},
-      {"crt", "application/x-x509-ca-cert"},
-      {"pem", "application/x-x509-ca-cert"},
-      {"der", "application/x-x509-ca-cert"},
-      {"xpi", "application/x-xpinstall"},
-      {"xhtml", "application/xhtml+xml"},
-      {"xspf", "application/xspf+xml"},
-      {"zip", "application/zip"},
-      {"dll", "application/octet-stream"},
-      {"exe", "application/octet-stream"},
-      {"bin", "application/octet-stream"},
-      {"deb", "application/octet-stream"},
-      {"dmg", "application/octet-stream"},
-      {"img", "application/octet-stream"},
-      {"iso", "application/octet-stream"},
-      {"msm", "application/octet-stream"},
-      {"msp", "application/octet-stream"},
-      {"msi", "application/octet-stream"},
-      {"kar", "audio/midi"},
-      {"midi", "audio/midi"},
-      {"mid", "audio/midi"},
-      {"mp3", "audio/mpeg"},
-      {"ogg", "audio/ogg"},
-      {"m4a", "audio/x-m4a"},
-      {"ra", "audio/x-realaudio"},
-      {"3gp", "video/3gpp"},
-      {"3gpp", "video/3gpp"},
-      {"ts", "video/mp2t"},
-      {"mp4", "video/mp4"},
-      {"mpg", "video/mpeg"},
-      {"mpeg", "video/mpeg"},
-      {"mov", "video/quicktime"},
-      {"webm", "video/webm"},
-      {"flv", "video/x-flv"},
-      {"m4v", "video/x-m4v"},
-      {"mng", "video/x-mng"},
-      {"asf", "video/x-ms-asf"},
-      {"asx", "video/x-ms-asf"},
-      {"wmv", "video/x-ms-wmv"},
-      {"avi", "video/x-msvideo"}};
-}
+    struct bad_request : public std::runtime_error
+    {
+        bad_request(const std::string& what_arg)
+            : std::runtime_error(what_arg) {}
 
+        bad_request(const char* what_arg)
+            : std::runtime_error(what_arg) {}
+    };
+}
 // settings for crow
 // TODO(ipkn) replace with runtime config. libucl?
 
@@ -1282,292 +1308,6 @@ namespace crow
         std::unique_ptr<asio::ssl::stream<tcp::socket>> ssl_socket_;
     };
 #endif
-} // namespace crow
-
-
-
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-#include <iostream>
-#include <sstream>
-#include <string>
-
-namespace crow
-{
-    enum class LogLevel
-    {
-#ifndef ERROR
-#ifndef DEBUG
-        DEBUG = 0,
-        INFO,
-        WARNING,
-        ERROR,
-        CRITICAL,
-#endif
-#endif
-
-        Debug = 0,
-        Info,
-        Warning,
-        Error,
-        Critical,
-    };
-
-    class ILogHandler
-    {
-    public:
-        virtual ~ILogHandler() = default;
-
-        virtual void log(const std::string& message, LogLevel level) = 0;
-    };
-
-    class CerrLogHandler : public ILogHandler
-    {
-    public:
-        void log(const std::string &message, LogLevel level) override
-        {
-            std::string log_msg;
-            log_msg.reserve(message.length() + 1+32+3+8+2);
-            log_msg
-                .append("(")
-                .append(timestamp())
-                .append(") [");
-
-            switch (level)
-            {
-                case LogLevel::Debug:
-                    log_msg.append("DEBUG   ");
-                    break;
-                case LogLevel::Info:
-                    log_msg.append("INFO    ");
-                    break;
-                case LogLevel::Warning:
-                    log_msg.append("WARNING ");
-                    break;
-                case LogLevel::Error:
-                    log_msg.append("ERROR   ");
-                    break;
-                case LogLevel::Critical:
-                    log_msg.append("CRITICAL");
-                    break;
-            }
-
-            log_msg.append("] ")
-            .append(message);
-
-            std::cerr << log_msg << std::endl;
-        }
-
-    private:
-        static std::string timestamp()
-        {
-            char date[32];
-            time_t t = time(0);
-
-            tm my_tm;
-
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#ifdef CROW_USE_LOCALTIMEZONE
-            localtime_s(&my_tm, &t);
-#else
-            gmtime_s(&my_tm, &t);
-#endif
-#else
-#ifdef CROW_USE_LOCALTIMEZONE
-            localtime_r(&t, &my_tm);
-#else
-            gmtime_r(&t, &my_tm);
-#endif
-#endif
-
-            size_t sz = strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", &my_tm);
-            return std::string(date, date + sz);
-        }
-    };
-
-    class logger
-    {
-    public:
-        logger(LogLevel level):
-          level_(level)
-        {}
-        ~logger()
-        {
-#ifdef CROW_ENABLE_LOGGING
-            if (level_ >= get_current_log_level())
-            {
-                get_handler_ref()->log(stringstream_.str(), level_);
-            }
-#endif
-        }
-
-        //
-        template<typename T>
-        logger& operator<<(T const& value)
-        {
-#ifdef CROW_ENABLE_LOGGING
-            if (level_ >= get_current_log_level())
-            {
-                stringstream_ << value;
-            }
-#endif
-            return *this;
-        }
-
-        //
-        static void setLogLevel(LogLevel level) { get_log_level_ref() = level; }
-
-        static void setHandler(ILogHandler* handler) { get_handler_ref() = handler; }
-
-        static LogLevel get_current_log_level() { return get_log_level_ref(); }
-
-    private:
-        //
-        static LogLevel& get_log_level_ref()
-        {
-            static LogLevel current_level = static_cast<LogLevel>(CROW_LOG_LEVEL);
-            return current_level;
-        }
-        static ILogHandler*& get_handler_ref()
-        {
-            static CerrLogHandler default_handler;
-            static ILogHandler* current_handler = &default_handler;
-            return current_handler;
-        }
-
-        //
-        std::ostringstream stringstream_;
-        LogLevel level_;
-    };
-} // namespace crow
-
-#define CROW_LOG_CRITICAL                                                  \
-    if (crow::logger::get_current_log_level() <= crow::LogLevel::Critical) \
-    crow::logger(crow::LogLevel::Critical)
-#define CROW_LOG_ERROR                                                  \
-    if (crow::logger::get_current_log_level() <= crow::LogLevel::Error) \
-    crow::logger(crow::LogLevel::Error)
-#define CROW_LOG_WARNING                                                  \
-    if (crow::logger::get_current_log_level() <= crow::LogLevel::Warning) \
-    crow::logger(crow::LogLevel::Warning)
-#define CROW_LOG_INFO                                                  \
-    if (crow::logger::get_current_log_level() <= crow::LogLevel::Info) \
-    crow::logger(crow::LogLevel::Info)
-#define CROW_LOG_DEBUG                                                  \
-    if (crow::logger::get_current_log_level() <= crow::LogLevel::Debug) \
-    crow::logger(crow::LogLevel::Debug)
-
-
-#include <string>
-
-namespace crow
-{
-    /// An abstract class that allows any other class to be returned by a handler.
-    struct returnable
-    {
-        std::string content_type;
-        virtual std::string dump() const = 0;
-
-        returnable(std::string ctype):
-          content_type{ctype}
-        {}
-
-        virtual ~returnable(){}
-    };
-} // namespace crow
-
-#ifdef CROW_USE_BOOST
-#include <boost/asio.hpp>
-#ifdef CROW_ENABLE_SSL
-#include <boost/asio/ssl.hpp>
-#endif
-#else
-#ifndef ASIO_STANDALONE
-#define ASIO_STANDALONE
-#endif
-#include <asio.hpp>
-#ifdef CROW_ENABLE_SSL
-#include <asio/ssl.hpp>
-#endif
-#endif
-
-
-namespace crow
-{
-#ifdef CROW_USE_BOOST
-    namespace asio = boost::asio;
-    using error_code = boost::system::error_code;
-#else
-    using error_code = asio::error_code;
-#endif
-    using tcp = asio::ip::tcp;
-    using stream_protocol = asio::local::stream_protocol;
-
-    struct TCPAcceptor
-    {
-        using endpoint = tcp::endpoint;
-        tcp::acceptor acceptor_;
-        TCPAcceptor(asio::io_context& io_context):
-          acceptor_(io_context) {}
-
-        int16_t port() const
-        {
-            return acceptor_.local_endpoint().port();
-        }
-        std::string address() const
-        {
-            return acceptor_.local_endpoint().address().to_string();
-        }
-        std::string url_display(bool ssl_used) const
-        {
-            auto address = acceptor_.local_endpoint().address();
-            return (ssl_used ? "https://" : "http://") + (address.is_v4() ? address.to_string() : "[" + address.to_string() + "]") + ":" + std::to_string(acceptor_.local_endpoint().port());
-        }
-        tcp::acceptor& raw_acceptor()
-        {
-            return acceptor_;
-        }
-        endpoint local_endpoint() const
-        {
-            return acceptor_.local_endpoint();
-        }
-        inline static tcp::acceptor::reuse_address reuse_address_option() { return tcp::acceptor::reuse_address(true); }
-    };
-
-    struct UnixSocketAcceptor
-    {
-        using endpoint = stream_protocol::endpoint;
-        stream_protocol::acceptor acceptor_;
-        UnixSocketAcceptor(asio::io_context& io_context):
-          acceptor_(io_context) {}
-
-        int16_t port() const
-        {
-            return 0;
-        }
-        std::string address() const
-        {
-            return acceptor_.local_endpoint().path();
-        }
-        std::string url_display(bool) const
-        {
-            return acceptor_.local_endpoint().path();
-        }
-        stream_protocol::acceptor& raw_acceptor()
-        {
-            return acceptor_;
-        }
-        endpoint local_endpoint() const
-        {
-            return acceptor_.local_endpoint();
-        }
-        inline static stream_protocol::acceptor::reuse_address reuse_address_option()
-        {
-            // reuse addr must be false (https://github.com/chriskohlhoff/asio/issues/622)
-            return stream_protocol::acceptor::reuse_address(false);
-        }
-    };
 } // namespace crow
 
 
@@ -2425,40 +2165,17 @@ namespace crow
             return res;
         }
 
-
-        /// Return a copy of the given string with its
+        /// Return string view of the given string view with its
         /// leading and trailing whitespaces removed.
-        inline static std::string trim(const std::string& v)
-        {
-            if (v.empty())
-                return "";
-
-            size_t begin = 0, end = v.length();
-
-            size_t i;
-            for (i = 0; i < v.length(); i++)
-            {
-                if (!std::isspace(v[i]))
-                {
-                    begin = i;
-                    break;
-                }
+        inline static std::string_view trim(const std::string_view sv) {
+            const size_t first = sv.find_first_not_of(" \t\n\r\f\v"); // same as isspace
+            if (std::string_view::npos == first) {
+                return sv.substr(0, 0);
             }
-
-            if (i == v.length())
-                return "";
-
-            for (i = v.length(); i > 0; i--)
-            {
-                if (!std::isspace(v[i - 1]))
-                {
-                    end = i;
-                    break;
-                }
-            }
-
-            return v.substr(begin, end - begin);
+            const size_t last = sv.find_last_not_of(" \t\n\r\f\v");
+            return sv.substr(first, (last - first + 1));
         }
+
 
         /**
          * @brief splits a string based on a separator
@@ -2500,6 +2217,3473 @@ namespace crow
         }
     } // namespace utility
 } // namespace crow
+
+
+#include <string_view>
+#include <locale>
+#include <unordered_map>
+
+
+namespace crow
+{
+    /// Hashing function for ci_map (unordered_multimap).
+    struct ci_hash
+    {
+        size_t operator()(const std::string_view key) const
+        {
+            std::size_t seed = 0;
+            std::locale locale;
+
+            for (auto c : key)
+                hash_combine(seed, std::toupper(c, locale));
+
+            return seed;
+        }
+
+    private:
+        static inline void hash_combine(std::size_t& seed, char v)
+        {
+            std::hash<char> hasher;
+            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+    };
+
+    /// Equals function for ci_map (unordered_multimap).
+    struct ci_key_eq
+    {
+        bool operator()(const std::string_view l, const std::string_view r) const
+        {
+            return utility::string_equals(l, r);
+        }
+    };
+
+    using ci_map = std::unordered_multimap<std::string, std::string, ci_hash, ci_key_eq>;
+} // namespace crow
+
+
+#include <vector>
+#include <string>
+#include <stdexcept>
+#include <iostream>
+
+namespace crow
+{
+    const char cr = '\r';
+    const char lf = '\n';
+    const std::string crlf("\r\n");
+
+    enum class HTTPMethod : char
+    {
+#ifndef DELETE
+        DELETE = 0,
+        GET,
+        HEAD,
+        POST,
+        PUT,
+
+        CONNECT,
+        OPTIONS,
+        TRACE,
+
+        PATCH,
+        PURGE,
+
+        COPY,
+        LOCK,
+        MKCOL,
+        MOVE,
+        PROPFIND,
+        PROPPATCH,
+        SEARCH,
+        UNLOCK,
+        BIND,
+        REBIND,
+        UNBIND,
+        ACL,
+
+        REPORT,
+        MKACTIVITY,
+        CHECKOUT,
+        MERGE,
+
+        MSEARCH,
+        NOTIFY,
+        SUBSCRIBE,
+        UNSUBSCRIBE,
+
+        MKCALENDAR,
+
+        LINK,
+        UNLINK,
+
+        SOURCE,
+#endif
+
+        Delete = 0,
+        Get,
+        Head,
+        Post,
+        Put,
+
+        Connect,
+        Options,
+        Trace,
+
+        Patch,
+        Purge,
+
+        Copy,
+        Lock,
+        MkCol,
+        Move,
+        Propfind,
+        Proppatch,
+        Search,
+        Unlock,
+        Bind,
+        Rebind,
+        Unbind,
+        Acl,
+
+        Report,
+        MkActivity,
+        Checkout,
+        Merge,
+
+        MSearch,
+        Notify,
+        Subscribe,
+        Unsubscribe,
+
+        MkCalendar,
+
+        Link,
+        Unlink,
+
+        Source,
+
+
+        InternalMethodCount,
+        // should not add an item below this line: used for array count
+    };
+
+    constexpr const char* method_strings[] =
+      {
+        "DELETE",
+        "GET",
+        "HEAD",
+        "POST",
+        "PUT",
+
+        "CONNECT",
+        "OPTIONS",
+        "TRACE",
+
+        "PATCH",
+        "PURGE",
+
+        "COPY",
+        "LOCK",
+        "MKCOL",
+        "MOVE",
+        "PROPFIND",
+        "PROPPATCH",
+        "SEARCH",
+        "UNLOCK",
+        "BIND",
+        "REBIND",
+        "UNBIND",
+        "ACL",
+
+        "REPORT",
+        "MKACTIVITY",
+        "CHECKOUT",
+        "MERGE",
+
+        "M-SEARCH",
+        "NOTIFY",
+        "SUBSCRIBE",
+        "UNSUBSCRIBE",
+
+        "MKCALENDAR",
+
+        "LINK",
+        "UNLINK",
+
+        "SOURCE"};
+
+
+    inline std::string method_name(HTTPMethod method)
+    {
+        if (CROW_LIKELY(method < HTTPMethod::InternalMethodCount))
+        {
+            return method_strings[static_cast<unsigned int>(method)];
+        }
+        return "invalid";
+    }
+
+    // clang-format off
+
+    enum status
+    {
+        CONTINUE                      = 100,
+        SWITCHING_PROTOCOLS           = 101,
+
+        OK                            = 200,
+        CREATED                       = 201,
+        ACCEPTED                      = 202,
+        NON_AUTHORITATIVE_INFORMATION = 203,
+        NO_CONTENT                    = 204,
+        RESET_CONTENT                 = 205,
+        PARTIAL_CONTENT               = 206,
+
+        MULTIPLE_CHOICES              = 300,
+        MOVED_PERMANENTLY             = 301,
+        FOUND                         = 302,
+        SEE_OTHER                     = 303,
+        NOT_MODIFIED                  = 304,
+        TEMPORARY_REDIRECT            = 307,
+        PERMANENT_REDIRECT            = 308,
+
+        BAD_REQUEST                   = 400,
+        UNAUTHORIZED                  = 401,
+        FORBIDDEN                     = 403,
+        NOT_FOUND                     = 404,
+        METHOD_NOT_ALLOWED            = 405,
+        NOT_ACCEPTABLE                = 406,
+        PROXY_AUTHENTICATION_REQUIRED = 407,
+        CONFLICT                      = 409,
+        GONE                          = 410,
+        PAYLOAD_TOO_LARGE             = 413,
+        UNSUPPORTED_MEDIA_TYPE        = 415,
+        RANGE_NOT_SATISFIABLE         = 416,
+        EXPECTATION_FAILED            = 417,
+        PRECONDITION_REQUIRED         = 428,
+        TOO_MANY_REQUESTS             = 429,
+        UNAVAILABLE_FOR_LEGAL_REASONS = 451,
+
+        INTERNAL_SERVER_ERROR         = 500,
+        NOT_IMPLEMENTED               = 501,
+        BAD_GATEWAY                   = 502,
+        SERVICE_UNAVAILABLE           = 503,
+        GATEWAY_TIMEOUT               = 504,
+        VARIANT_ALSO_NEGOTIATES       = 506
+    };
+
+    // clang-format on
+
+    enum class ParamType : char
+    {
+        INT,
+        UINT,
+        DOUBLE,
+        STRING,
+        PATH,
+
+        MAX
+    };
+
+    /// @cond SKIP
+    struct routing_params
+    {
+        std::vector<int64_t> int_params;
+        std::vector<uint64_t> uint_params;
+        std::vector<double> double_params;
+        std::vector<std::string> string_params;
+
+        void debug_print() const
+        {
+            std::cerr << "routing_params" << std::endl;
+            for (auto i : int_params)
+                std::cerr << i << ", ";
+            std::cerr << std::endl;
+            for (auto i : uint_params)
+                std::cerr << i << ", ";
+            std::cerr << std::endl;
+            for (auto i : double_params)
+                std::cerr << i << ", ";
+            std::cerr << std::endl;
+            for (auto& i : string_params)
+                std::cerr << i << ", ";
+            std::cerr << std::endl;
+        }
+
+        template<typename T>
+        T get(unsigned) const;
+    };
+
+    template<>
+    inline int64_t routing_params::get<int64_t>(unsigned index) const
+    {
+        return int_params[index];
+    }
+
+    template<>
+    inline uint64_t routing_params::get<uint64_t>(unsigned index) const
+    {
+        return uint_params[index];
+    }
+
+    template<>
+    inline double routing_params::get<double>(unsigned index) const
+    {
+        return double_params[index];
+    }
+
+    template<>
+    inline std::string routing_params::get<std::string>(unsigned index) const
+    {
+        return string_params[index];
+    }
+    /// @endcond
+
+    struct routing_handle_result
+    {
+        bool catch_all{false};
+        size_t rule_index;
+        std::vector<size_t> blueprint_indices;
+        routing_params r_params;
+        HTTPMethod method;
+
+        routing_handle_result() {}
+
+        routing_handle_result(size_t rule_index_, std::vector<size_t> blueprint_indices_, routing_params r_params_):
+          rule_index(rule_index_),
+          blueprint_indices(blueprint_indices_),
+          r_params(r_params_) {}
+
+        routing_handle_result(size_t rule_index_, std::vector<size_t> blueprint_indices_, routing_params r_params_, HTTPMethod method_):
+          rule_index(rule_index_),
+          blueprint_indices(blueprint_indices_),
+          r_params(r_params_),
+          method(method_) {}
+    };
+} // namespace crow
+
+// clang-format off
+#ifndef CROW_MSVC_WORKAROUND
+constexpr crow::HTTPMethod method_from_string(const char* str)
+{
+    return crow::black_magic::is_equ_p(str, "GET", 3)    ? crow::HTTPMethod::Get :
+           crow::black_magic::is_equ_p(str, "DELETE", 6) ? crow::HTTPMethod::Delete :
+           crow::black_magic::is_equ_p(str, "HEAD", 4)   ? crow::HTTPMethod::Head :
+           crow::black_magic::is_equ_p(str, "POST", 4)   ? crow::HTTPMethod::Post :
+           crow::black_magic::is_equ_p(str, "PUT", 3)    ? crow::HTTPMethod::Put :
+
+           crow::black_magic::is_equ_p(str, "OPTIONS", 7) ? crow::HTTPMethod::Options :
+           crow::black_magic::is_equ_p(str, "CONNECT", 7) ? crow::HTTPMethod::Connect :
+           crow::black_magic::is_equ_p(str, "TRACE", 5)   ? crow::HTTPMethod::Trace :
+
+           crow::black_magic::is_equ_p(str, "PATCH", 5)     ? crow::HTTPMethod::Patch :
+           crow::black_magic::is_equ_p(str, "PURGE", 5)     ? crow::HTTPMethod::Purge :
+           crow::black_magic::is_equ_p(str, "COPY", 4)      ? crow::HTTPMethod::Copy :
+           crow::black_magic::is_equ_p(str, "LOCK", 4)      ? crow::HTTPMethod::Lock :
+           crow::black_magic::is_equ_p(str, "MKCOL", 5)     ? crow::HTTPMethod::MkCol :
+           crow::black_magic::is_equ_p(str, "MOVE", 4)      ? crow::HTTPMethod::Move :
+           crow::black_magic::is_equ_p(str, "PROPFIND", 8)  ? crow::HTTPMethod::Propfind :
+           crow::black_magic::is_equ_p(str, "PROPPATCH", 9) ? crow::HTTPMethod::Proppatch :
+           crow::black_magic::is_equ_p(str, "SEARCH", 6)    ? crow::HTTPMethod::Search :
+           crow::black_magic::is_equ_p(str, "UNLOCK", 6)    ? crow::HTTPMethod::Unlock :
+           crow::black_magic::is_equ_p(str, "BIND", 4)      ? crow::HTTPMethod::Bind :
+           crow::black_magic::is_equ_p(str, "REBIND", 6)    ? crow::HTTPMethod::Rebind :
+           crow::black_magic::is_equ_p(str, "UNBIND", 6)    ? crow::HTTPMethod::Unbind :
+           crow::black_magic::is_equ_p(str, "ACL", 3)       ? crow::HTTPMethod::Acl :
+
+           crow::black_magic::is_equ_p(str, "REPORT", 6)      ? crow::HTTPMethod::Report :
+           crow::black_magic::is_equ_p(str, "MKACTIVITY", 10) ? crow::HTTPMethod::MkActivity :
+           crow::black_magic::is_equ_p(str, "CHECKOUT", 8)    ? crow::HTTPMethod::Checkout :
+           crow::black_magic::is_equ_p(str, "MERGE", 5)       ? crow::HTTPMethod::Merge :
+
+           crow::black_magic::is_equ_p(str, "MSEARCH", 7)      ? crow::HTTPMethod::MSearch :
+           crow::black_magic::is_equ_p(str, "NOTIFY", 6)       ? crow::HTTPMethod::Notify :
+           crow::black_magic::is_equ_p(str, "SUBSCRIBE", 9)    ? crow::HTTPMethod::Subscribe :
+           crow::black_magic::is_equ_p(str, "UNSUBSCRIBE", 11) ? crow::HTTPMethod::Unsubscribe :
+
+           crow::black_magic::is_equ_p(str, "MKCALENDAR", 10) ? crow::HTTPMethod::MkCalendar :
+
+           crow::black_magic::is_equ_p(str, "LINK", 4)   ? crow::HTTPMethod::Link :
+           crow::black_magic::is_equ_p(str, "UNLINK", 6) ? crow::HTTPMethod::Unlink :
+
+           crow::black_magic::is_equ_p(str, "SOURCE", 6) ? crow::HTTPMethod::Source :
+                                                           throw std::runtime_error("invalid http method");
+}
+
+constexpr crow::HTTPMethod operator""_method(const char* str, size_t /*len*/)
+{
+    return method_from_string( str );
+}
+#endif
+// clang-format on
+
+
+#ifdef CROW_USE_BOOST
+#include <boost/asio.hpp>
+#else
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+#include <asio.hpp>
+#endif
+
+
+namespace crow // NOTE: Already documented in "crow/app.h"
+{
+#ifdef CROW_USE_BOOST
+    namespace asio = boost::asio;
+#endif
+
+    /// Find and return the value associated with the key. (returns an empty string if nothing is found)
+    inline const std::string& get_header_value(const ci_map& headers, const std::string& key)
+    {
+        static const std::string EMPTY;
+        const auto it = headers.find(key);
+        if (it != headers.end()) {
+            return it->second;
+        }
+        else {
+            return EMPTY;
+        }
+    }
+
+    /// An HTTP request.
+    struct request
+    {
+        HTTPMethod method;
+        std::string raw_url;     ///< The full URL containing the `?` and URL parameters.
+        std::string url;         ///< The endpoint without any parameters.
+        query_string url_params; ///< The parameters associated with the request. (everything after the `?` in the URL)
+        ci_map headers;
+        std::string body;
+        std::string remote_ip_address; ///< The IP address from which the request was sent.
+        unsigned char http_ver_major, http_ver_minor;
+        bool keep_alive,    ///< Whether or not the server should send a `connection: Keep-Alive` header to the client.
+          close_connection, ///< Whether or not the server should shut down the TCP connection once a response is sent.
+          upgrade;          ///< Whether or noth the server should change the HTTP connection to a different connection.
+
+        void* middleware_context{};
+        void* middleware_container{};
+        asio::io_context* io_context{};
+
+        /// Construct an empty request. (sets the method to `GET`)
+        request():
+          method(HTTPMethod::Get)
+        {}
+
+        /// Construct a request with all values assigned.
+        request(HTTPMethod method_, std::string raw_url_, std::string url_, query_string url_params_, ci_map headers_, std::string body_, unsigned char http_major, unsigned char http_minor, bool has_keep_alive, bool has_close_connection, bool is_upgrade):
+          method(method_), raw_url(std::move(raw_url_)), url(std::move(url_)), url_params(std::move(url_params_)), headers(std::move(headers_)), body(std::move(body_)), http_ver_major(http_major), http_ver_minor(http_minor), keep_alive(has_keep_alive), close_connection(has_close_connection), upgrade(is_upgrade)
+        {}
+
+        void add_header(std::string key, std::string value)
+        {
+            headers.emplace(std::move(key), std::move(value));
+        }
+
+        const std::string& get_header_value(const std::string& key) const
+        {
+            return crow::get_header_value(headers, key);
+        }
+
+        bool check_version(unsigned char major, unsigned char minor) const
+        {
+            return http_ver_major == major && http_ver_minor == minor;
+        }
+
+        /// Get the body as parameters in QS format.
+
+        ///
+        /// This is meant to be used with requests of type "application/x-www-form-urlencoded"
+        const query_string get_body_params() const
+        {
+            return query_string(body, false);
+        }
+
+        /// Send data to whoever made this request with a completion handler and return immediately.
+        template<typename CompletionHandler>
+        void post(CompletionHandler handler)
+        {
+            asio::post(io_context, handler);
+        }
+
+        /// Send data to whoever made this request with a completion handler.
+        template<typename CompletionHandler>
+        void dispatch(CompletionHandler handler)
+        {
+            asio::dispatch(io_context, handler);
+        }
+    };
+} // namespace crow
+
+
+#include <string>
+#include <vector>
+#include <sstream>
+
+
+namespace crow
+{
+
+    /// Encapsulates anything related to processing and organizing `multipart/xyz` messages
+    namespace multipart
+    {
+
+        const std::string dd = "--";
+
+        /// The first part in a section, contains metadata about the part
+        struct header
+        {
+            std::string value;                                   ///< The first part of the header, usually `Content-Type` or `Content-Disposition`
+            std::unordered_map<std::string, std::string> params; ///< The parameters of the header, come after the `value`
+
+            operator int() const { return std::stoi(value); }    ///< Returns \ref value as integer
+            operator double() const { return std::stod(value); } ///< Returns \ref value as double
+        };
+
+        /// Multipart header map (key is header key).
+        using mph_map = std::unordered_multimap<std::string, header, ci_hash, ci_key_eq>;
+
+        /// Find and return the value object associated with the key. (returns an empty class if nothing is found)
+        template<typename O, typename T>
+        inline const O& get_header_value_object(const T& headers, const std::string& key)
+        {
+            if (headers.count(key))
+            {
+                return headers.find(key)->second;
+            }
+            static O empty;
+            return empty;
+        }
+
+        /// Same as \ref get_header_value_object() but for \ref multipart.header
+        template<typename T>
+        inline const header& get_header_object(const T& headers, const std::string& key)
+        {
+            return get_header_value_object<header>(headers, key);
+        }
+
+        ///One part of the multipart message
+
+        ///
+        /// It is usually separated from other sections by a `boundary`
+        struct part
+        {
+            mph_map headers;  ///< (optional) The first part before the data, Contains information regarding the type of data and encoding
+            std::string body; ///< The actual data in the part
+
+            operator int() const { return std::stoi(body); }    ///< Returns \ref body as integer
+            operator double() const { return std::stod(body); } ///< Returns \ref body as double
+
+            const header& get_header_object(const std::string& key) const
+            {
+                return multipart::get_header_object(headers, key);
+            }
+        };
+
+        /// Multipart map (key is the name parameter).
+        using mp_map = std::unordered_multimap<std::string, part, ci_hash, ci_key_eq>;
+
+        /// The parsed multipart request/response
+        struct message : public returnable
+        {
+            ci_map headers;          ///< The request/response headers
+            std::string boundary;    ///< The text boundary that separates different `parts`
+            std::vector<part> parts; ///< The individual parts of the message
+            mp_map part_map;         ///< The individual parts of the message, organized in a map with the `name` header parameter being the key
+
+            const std::string& get_header_value(const std::string& key) const
+            {
+                return crow::get_header_value(headers, key);
+            }
+
+            part get_part_by_name(const std::string& name)
+            {
+                mp_map::iterator result = part_map.find(name);
+                if (result != part_map.end())
+                    return result->second;
+                else
+                    return {};
+            }
+
+            /// Represent all parts as a string (**does not include message headers**)
+            std::string dump() const override
+            {
+                std::stringstream str;
+                std::string delimiter = dd + boundary;
+
+                for (unsigned i = 0; i < parts.size(); i++)
+                {
+                    str << delimiter << crlf;
+                    str << dump(i);
+                }
+                str << delimiter << dd << crlf;
+                return str.str();
+            }
+
+            /// Represent an individual part as a string
+            std::string dump(int part_) const
+            {
+                std::stringstream str;
+                part item = parts[part_];
+                for (auto& item_h : item.headers)
+                {
+                    str << item_h.first << ": " << item_h.second.value;
+                    for (auto& it : item_h.second.params)
+                    {
+                        str << "; " << it.first << '=' << pad(it.second);
+                    }
+                    str << crlf;
+                }
+                str << crlf;
+                str << item.body << crlf;
+                return str.str();
+            }
+
+            /// Default constructor using default values
+            message(const ci_map& headers_, const std::string& boundary_, const std::vector<part>& sections):
+              returnable("multipart/form-data; boundary=CROW-BOUNDARY"), headers(headers_), boundary(boundary_), parts(sections)
+            {
+                if (!boundary.empty())
+                    content_type = "multipart/form-data; boundary=" + boundary;
+                for (auto& item : parts)
+                {
+                    part_map.emplace(
+                      (get_header_object(item.headers, "Content-Disposition").params.find("name")->second),
+                      item);
+                }
+            }
+
+            /// Create a multipart message from a request data
+            explicit message(const request& req):
+              returnable("multipart/form-data; boundary=CROW-BOUNDARY"),
+              headers(req.headers),
+              boundary(get_boundary(get_header_value("Content-Type")))
+            {
+                if (!boundary.empty())
+                {
+                    content_type = "multipart/form-data; boundary=" + boundary;
+                    parse_body(req.body);
+                }
+                else
+                {
+                    throw bad_request("Empty boundary in multipart message");
+                }
+            }
+
+        private:
+            std::string get_boundary(const std::string& header) const
+            {
+                constexpr char boundary_text[] = "boundary=";
+                size_t found = header.find(boundary_text);
+                if (found != std::string::npos)
+                {
+                    std::string to_return(header.substr(found + strlen(boundary_text)));
+                    if (to_return[0] == '\"')
+                    {
+                        to_return = to_return.substr(1, to_return.length() - 2);
+                    }
+                    return to_return;
+                }
+                return std::string();
+            }
+
+            void parse_body(std::string body)
+            {
+                std::string delimiter = dd + boundary;
+
+                // TODO(EDev): Exit on error
+                while (body != (crlf))
+                {
+                    size_t found = body.find(delimiter);
+                    if (found == std::string::npos)
+                    {
+                        // did not find delimiter; probably an ill-formed body; throw to indicate the issue to user
+                        throw bad_request("Unable to find delimiter in multipart message. Probably ill-formed body");
+                    }
+                    std::string section = body.substr(0, found);
+
+                    // +2 is the CRLF.
+                    // We don't check it and delete it so that the same delimiter can be used for The last delimiter (--delimiter--CRLF).
+                    body.erase(0, found + delimiter.length() + 2);
+                    if (!section.empty())
+                    {
+                        part parsed_section(parse_section(section));
+                        part_map.emplace(
+                          (get_header_object(parsed_section.headers, "Content-Disposition").params.find("name")->second),
+                          parsed_section);
+                        parts.push_back(std::move(parsed_section));
+                    }
+                }
+            }
+
+            part parse_section(std::string& section)
+            {
+                struct part to_return;
+
+                size_t found = section.find(crlf + crlf);
+                std::string head_line = section.substr(0, found + 2);
+                section.erase(0, found + 4);
+
+                parse_section_head(head_line, to_return);
+                to_return.body = section.substr(0, section.length() - 2);
+                return to_return;
+            }
+
+            void parse_section_head(std::string& lines, part& part)
+            {
+                while (!lines.empty())
+                {
+                    header to_add;
+
+                    const size_t found_crlf = lines.find(crlf);
+                    std::string line = lines.substr(0, found_crlf);
+                    std::string key;
+                    lines.erase(0, found_crlf + 2);
+                    // Add the header if available
+                    if (!line.empty())
+                    {
+                        const size_t found_semicolon = line.find("; ");
+                        std::string header = line.substr(0, found_semicolon);
+                        if (found_semicolon != std::string::npos)
+                            line.erase(0, found_semicolon + 2);
+                        else
+                            line = std::string();
+
+                        size_t header_split = header.find(": ");
+                        key = header.substr(0, header_split);
+
+                        to_add.value = header.substr(header_split + 2);
+                    }
+
+                    // Add the parameters
+                    while (!line.empty())
+                    {
+                        const size_t found_semicolon = line.find("; ");
+                        std::string param = line.substr(0, found_semicolon);
+                        if (found_semicolon != std::string::npos)
+                            line.erase(0, found_semicolon + 2);
+                        else
+                            line = std::string();
+
+                        size_t param_split = param.find('=');
+
+                        std::string value = param.substr(param_split + 1);
+
+                        to_add.params.emplace(param.substr(0, param_split), trim(value));
+                    }
+                    part.headers.emplace(key, to_add);
+                }
+            }
+
+            inline std::string trim(std::string& string, const char& excess = '"') const
+            {
+                if (string.length() > 1 && string[0] == excess && string[string.length() - 1] == excess)
+                    return string.substr(1, string.length() - 2);
+                return string;
+            }
+
+            inline std::string pad(std::string& string, const char& padding = '"') const
+            {
+                return (padding + string + padding);
+            }
+        };
+    } // namespace multipart
+} // namespace crow
+
+
+#include <charconv>
+#include <string>
+#include <vector>
+#include <string_view>
+#include <sstream>
+
+// for crow::multipart::dd
+
+namespace crow
+{
+
+    /// Encapsulates anything related to processing and organizing `multipart/xyz` messages
+    namespace multipart
+    {
+        /// The first part in a section, contains metadata about the part
+        struct header_view
+        {
+            std::string_view value;                                        ///< The first part of the header, usually `Content-Type` or `Content-Disposition`
+            std::unordered_map<std::string_view, std::string_view> params; ///< The parameters of the header, come after the `value`
+
+            /// Returns \ref value as integer
+            operator int() const
+            {
+                int result = 0;
+                std::from_chars(value.data(), value.data() + value.size(), result);
+                return result;
+            }
+
+            /// Returns \ref value as double
+            operator double() const
+            {
+                // There's no std::from_chars for floating-point types in a lot of STLs
+                return std::stod(static_cast<std::string>(value));
+            }
+        };
+
+        /// Multipart header map (key is header key).
+        using mph_view_map = std::unordered_multimap<std::string_view, header_view, ci_hash, ci_key_eq>;
+
+        /// Finds and returns the header with the specified key. (returns an empty header if nothing is found)
+        inline const header_view& get_header_object(const mph_view_map& headers, const std::string_view key)
+        {
+            const auto header = headers.find(key);
+            if (header != headers.cend())
+            {
+                return header->second;
+            }
+
+            static header_view empty;
+            return empty;
+        }
+
+        /// String padded with the specified padding (double quotes by default)
+        struct padded
+        {
+            std::string_view value;   ///< String to pad
+            const char padding = '"'; ///< Padding to use
+
+            /// Outputs padded value to the stream
+            friend std::ostream& operator<<(std::ostream& stream, const padded value_)
+            {
+                return stream << value_.padding << value_.value << value_.padding;
+            }
+        };
+
+        ///One part of the multipart message
+
+        ///
+        /// It is usually separated from other sections by a `boundary`
+        struct part_view
+        {
+            mph_view_map headers;  ///< (optional) The first part before the data, Contains information regarding the type of data and encoding
+            std::string_view body; ///< The actual data in the part
+
+            /// Returns \ref body as integer
+            operator int() const
+            {
+                int result = 0;
+                std::from_chars(body.data(), body.data() + body.size(), result);
+                return result;
+            }
+
+            /// Returns \ref body as double
+            operator double() const
+            {
+                // There's no std::from_chars for floating-point types in a lot of STLs
+                return std::stod(static_cast<std::string>(body));
+            }
+
+            const header_view& get_header_object(const std::string_view key) const
+            {
+                return multipart::get_header_object(headers, key);
+            }
+
+            friend std::ostream& operator<<(std::ostream& stream, const part_view& part)
+            {
+                for (const auto& [header_key, header_value] : part.headers)
+                {
+                    stream << header_key << ": " << header_value.value;
+                    for (const auto& [param_key, param_value] : header_value.params)
+                    {
+                        stream << "; " << param_key << '=' << padded{param_value};
+                    }
+                    stream << crlf;
+                }
+                stream << crlf;
+                stream << part.body << crlf;
+                return stream;
+            }
+        };
+
+        /// Multipart map (key is the name parameter).
+        using mp_view_map = std::unordered_multimap<std::string_view, part_view, ci_hash, ci_key_eq>;
+
+        /// The parsed multipart request/response
+        struct message_view
+        {
+            std::reference_wrapper<const ci_map> headers; ///< The request/response headers
+            std::string boundary;                         ///< The text boundary that separates different `parts`
+            std::vector<part_view> parts;                 ///< The individual parts of the message
+            mp_view_map part_map;                         ///< The individual parts of the message, organized in a map with the `name` header parameter being the key
+
+            const std::string& get_header_value(const std::string& key) const
+            {
+                return crow::get_header_value(headers.get(), key);
+            }
+
+            part_view get_part_by_name(const std::string_view name)
+            {
+                mp_view_map::iterator result = part_map.find(name);
+                if (result != part_map.end())
+                    return result->second;
+                else
+                    return {};
+            }
+
+            friend std::ostream& operator<<(std::ostream& stream, const message_view message)
+            {
+                std::string delimiter = dd + message.boundary;
+
+                for (const part_view& part : message.parts)
+                {
+                    stream << delimiter << crlf;
+                    stream << part;
+                }
+                stream << delimiter << dd << crlf;
+
+                return stream;
+            }
+
+            /// Represent all parts as a string (**does not include message headers**)
+            std::string dump() const
+            {
+                std::ostringstream str;
+                str << *this;
+                return std::move(str).str();
+            }
+
+            /// Represent an individual part as a string
+            std::string dump(int part_) const
+            {
+                std::ostringstream str;
+                str << parts.at(part_);
+                return std::move(str).str();
+            }
+
+            /// Default constructor using default values
+            message_view(const ci_map& headers_, const std::string& boundary_, const std::vector<part_view>& sections):
+              headers(headers_), boundary(boundary_), parts(sections)
+            {
+                for (const part_view& item : parts)
+                {
+                    part_map.emplace(
+                      (get_header_object(item.headers, "Content-Disposition").params.find("name")->second),
+                      item);
+                }
+            }
+
+            /// Create a multipart message from a request data
+            explicit message_view(const request& req):
+              headers(req.headers),
+              boundary(get_boundary(get_header_value("Content-Type")))
+            {
+                parse_body(req.body);
+            }
+
+        private:
+            std::string_view get_boundary(const std::string_view header) const
+            {
+                constexpr std::string_view boundary_text = "boundary=";
+                const size_t found = header.find(boundary_text);
+                if (found == std::string_view::npos)
+                {
+                    return std::string_view();
+                }
+
+                const std::string_view to_return = header.substr(found + boundary_text.size());
+                if (to_return[0] == '\"')
+                {
+                    return to_return.substr(1, to_return.length() - 2);
+                }
+                return to_return;
+            }
+
+            void parse_body(std::string_view body)
+            {
+                const std::string delimiter = dd + boundary;
+
+                // TODO(EDev): Exit on error
+                while (body != (crlf))
+                {
+                    const size_t found = body.find(delimiter);
+                    if (found == std::string_view::npos)
+                    {
+                        // did not find delimiter; probably an ill-formed body; ignore the rest
+                        break;
+                    }
+
+                    const std::string_view section = body.substr(0, found);
+
+                    // +2 is the CRLF.
+                    // We don't check it and delete it so that the same delimiter can be used for The last delimiter (--delimiter--CRLF).
+                    body = body.substr(found + delimiter.length() + 2);
+                    if (!section.empty())
+                    {
+                        part_view parsed_section = parse_section(section);
+                        part_map.emplace(
+                          (get_header_object(parsed_section.headers, "Content-Disposition").params.find("name")->second),
+                          parsed_section);
+                        parts.push_back(std::move(parsed_section));
+                    }
+                }
+            }
+
+            part_view parse_section(std::string_view section)
+            {
+                constexpr static std::string_view crlf2 = "\r\n\r\n";
+
+                const size_t found = section.find(crlf2);
+                const std::string_view head_line = section.substr(0, found + 2);
+                section = section.substr(found + 4);
+
+                return part_view{
+                  parse_section_head(head_line),
+                  section.substr(0, section.length() - 2),
+                };
+            }
+
+            mph_view_map parse_section_head(std::string_view lines)
+            {
+                mph_view_map result;
+
+                while (!lines.empty())
+                {
+                    header_view to_add;
+
+                    const size_t found_crlf = lines.find(crlf);
+                    std::string_view line = lines.substr(0, found_crlf);
+                    std::string_view key;
+                    lines = lines.substr(found_crlf + 2);
+                    // Add the header if available
+                    if (!line.empty())
+                    {
+                        const size_t found_semicolon = line.find("; ");
+                        std::string_view header = line.substr(0, found_semicolon);
+                        if (found_semicolon != std::string_view::npos)
+                            line = line.substr(found_semicolon + 2);
+                        else
+                            line = std::string_view();
+
+                        const size_t header_split = header.find(": ");
+                        key = header.substr(0, header_split);
+
+                        to_add.value = header.substr(header_split + 2);
+                    }
+
+                    // Add the parameters
+                    while (!line.empty())
+                    {
+                        const size_t found_semicolon = line.find("; ");
+                        std::string_view param = line.substr(0, found_semicolon);
+                        if (found_semicolon != std::string_view::npos)
+                            line = line.substr(found_semicolon + 2);
+                        else
+                            line = std::string_view();
+
+                        const size_t param_split = param.find('=');
+
+                        const std::string_view value = param.substr(param_split + 1);
+
+                        to_add.params.emplace(param.substr(0, param_split), trim(value));
+                    }
+                    result.emplace(key, to_add);
+                }
+
+                return result;
+            }
+
+            inline std::string_view trim(const std::string_view string, const char excess = '"') const
+            {
+                if (string.length() > 1 && string[0] == excess && string[string.length() - 1] == excess)
+                    return string.substr(1, string.length() - 2);
+                return string;
+            }
+        };
+    } // namespace multipart
+} // namespace crow
+
+/* merged revision: 5b951d74bd66ec9d38448e0a85b1cf8b85d97db3 */
+/* updated to     : e13b274770da9b82a1085dec29182acfea72e7a7 (beyond v2.9.5) */
+/* commits not included:
+ * 091ebb87783a58b249062540bbea07de2a11e9cf
+ * 6132d1fefa03f769a3979355d1f5da0b8889cad2
+ * 7ba312397c2a6c851a4b5efe6c1603b1e1bda6ff
+ * d7675453a6c03180572f084e95eea0d02df39164
+ * dff604db203986e532e5a679bafd0e7382c6bdd9 (Might be useful to actually add [upgrade requests with a body])
+ * e01811e7f4894d7f0f7f4bd8492cccec6f6b4038 (related to above)
+ * 05525c5fde1fc562481f6ae08fa7056185325daf (also related to above)
+ * 350258965909f249f9c59823aac240313e0d0120 (cannot be implemented due to upgrade)
+ */
+
+// clang-format off
+extern "C" {
+#include <stddef.h>
+#if defined(_WIN32) && !defined(__MINGW32__) && \
+  (!defined(_MSC_VER) || _MSC_VER<1600) && !defined(__WINE__)
+#include <BaseTsd.h>
+typedef __int8 int8_t;
+typedef unsigned __int8 uint8_t;
+typedef __int16 int16_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#elif (defined(__sun) || defined(__sun__)) && defined(__SunOS_5_9)
+#include <sys/inttypes.h>
+#else
+#include <stdint.h>
+#endif
+#include <assert.h>
+#include <ctype.h>
+#include <string.h>
+#include <limits.h>
+}
+
+namespace crow
+{
+/* Maximium header size allowed. If the macro is not defined
+ * before including this header then the default is used. To
+ * change the maximum header size, define the macro in the build
+ * environment (e.g. -DHTTP_MAX_HEADER_SIZE=<value>). To remove
+ * the effective limit on the size of the header, define the macro
+ * to a very large number (e.g. -DCROW_HTTP_MAX_HEADER_SIZE=0x7fffffff)
+ */
+#ifndef CROW_HTTP_MAX_HEADER_SIZE
+# define CROW_HTTP_MAX_HEADER_SIZE (80*1024)
+#endif
+
+typedef struct http_parser http_parser;
+typedef struct http_parser_settings http_parser_settings;
+
+/* Callbacks should return non-zero to indicate an error. The parser will
+ * then halt execution.
+ *
+ * The one exception is on_headers_complete. In a HTTP_RESPONSE parser
+ * returning '1' from on_headers_complete will tell the parser that it
+ * should not expect a body. This is used when receiving a response to a
+ * HEAD request which may contain 'Content-Length' or 'Transfer-Encoding:
+ * chunked' headers that indicate the presence of a body.
+ *
+ * Returning `2` from on_headers_complete will tell parser that it should not
+ * expect neither a body nor any futher responses on this connection. This is
+ * useful for handling responses to a CONNECT request which may not contain
+ * `Upgrade` or `Connection: upgrade` headers.
+ *
+ * http_data_cb does not return data chunks. It will be called arbitrarally
+ * many times for each string. E.G. you might get 10 callbacks for "on_url"
+ * each providing just a few characters more data.
+ */
+typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
+typedef int (*http_cb) (http_parser*);
+
+
+/* Flag values for http_parser.flags field */
+enum http_connection_flags // This is basically 7 booleans placed into 1 integer. Uses 4 bytes instead of n bytes (7 currently).
+  { F_CHUNKED               = 1 << 0 // 00000000 00000000 00000000 00000001
+  , F_CONNECTION_KEEP_ALIVE = 1 << 1 // 00000000 00000000 00000000 00000010
+  , F_CONNECTION_CLOSE      = 1 << 2 // 00000000 00000000 00000000 00000100
+  , F_TRAILING              = 1 << 3 // 00000000 00000000 00000000 00001000
+  , F_UPGRADE               = 1 << 4 // 00000000 00000000 00000000 00010000
+  , F_SKIPBODY              = 1 << 5 // 00000000 00000000 00000000 00100000
+  , F_CONTENTLENGTH         = 1 << 6 // 00000000 00000000 00000000 01000000
+  };
+
+
+/* Map for errno-related constants
+ *
+ * The provided argument should be a macro that takes 2 arguments.
+ */
+#define CROW_HTTP_ERRNO_MAP(CROW_XX)                                                    \
+  /* No error */                                                                        \
+  CROW_XX(OK, "success")                                                                \
+                                                                                        \
+  /* Callback-related errors */                                                         \
+  CROW_XX(CB_message_begin, "the on_message_begin callback failed")                     \
+  CROW_XX(CB_method, "the on_method callback failed")                                   \
+  CROW_XX(CB_url, "the \"on_url\" callback failed")                                     \
+  CROW_XX(CB_header_field, "the \"on_header_field\" callback failed")                   \
+  CROW_XX(CB_header_value, "the \"on_header_value\" callback failed")                   \
+  CROW_XX(CB_headers_complete, "the \"on_headers_complete\" callback failed")           \
+  CROW_XX(CB_body, "the \"on_body\" callback failed")                                   \
+  CROW_XX(CB_message_complete, "the \"on_message_complete\" callback failed")           \
+  CROW_XX(CB_status, "the \"on_status\" callback failed")                               \
+                                                                                        \
+  /* Parsing-related errors */                                                          \
+  CROW_XX(INVALID_EOF_STATE, "stream ended at an unexpected time")                      \
+  CROW_XX(HEADER_OVERFLOW, "too many header bytes seen; overflow detected")             \
+  CROW_XX(CLOSED_CONNECTION, "data received after completed connection: close message") \
+  CROW_XX(INVALID_VERSION, "invalid HTTP version")                                      \
+  CROW_XX(INVALID_STATUS, "invalid HTTP status code")                                   \
+  CROW_XX(INVALID_METHOD, "invalid HTTP method")                                        \
+  CROW_XX(INVALID_URL, "invalid URL")                                                   \
+  CROW_XX(INVALID_HOST, "invalid host")                                                 \
+  CROW_XX(INVALID_PORT, "invalid port")                                                 \
+  CROW_XX(INVALID_PATH, "invalid path")                                                 \
+  CROW_XX(INVALID_QUERY_STRING, "invalid query string")                                 \
+  CROW_XX(INVALID_FRAGMENT, "invalid fragment")                                         \
+  CROW_XX(LF_EXPECTED, "LF character expected")                                         \
+  CROW_XX(INVALID_HEADER_TOKEN, "invalid character in header")                          \
+  CROW_XX(INVALID_CONTENT_LENGTH, "invalid character in content-length header")         \
+  CROW_XX(UNEXPECTED_CONTENT_LENGTH, "unexpected content-length header")                \
+  CROW_XX(INVALID_CHUNK_SIZE, "invalid character in chunk size header")                 \
+  CROW_XX(INVALID_CONSTANT, "invalid constant string")                                  \
+  CROW_XX(INVALID_INTERNAL_STATE, "encountered unexpected internal state")              \
+  CROW_XX(STRICT, "strict mode assertion failed")                                       \
+  CROW_XX(UNKNOWN, "an unknown error occurred")                                         \
+  CROW_XX(INVALID_TRANSFER_ENCODING, "request has invalid transfer-encoding")           \
+
+
+/* Define CHPE_* values for each errno value above */
+#define CROW_HTTP_ERRNO_GEN(n, s) CHPE_##n,
+enum http_errno {
+  CROW_HTTP_ERRNO_MAP(CROW_HTTP_ERRNO_GEN)
+};
+#undef CROW_HTTP_ERRNO_GEN
+
+
+/* Get an http_errno value from an http_parser */
+#define CROW_HTTP_PARSER_ERRNO(p) ((enum http_errno)(p)->http_errno)
+
+
+    struct http_parser
+    {
+        /** PRIVATE **/
+        unsigned int flags : 7;                  /* F_* values from 'flags' enum; semi-public */
+        unsigned int state : 8;                  /* enum state from http_parser.c */
+        unsigned int header_state : 7;           /* enum header_state from http_parser.c */
+        unsigned int index : 5;                  /* index into current matcher */
+        unsigned int uses_transfer_encoding : 1; /* Transfer-Encoding header is present */
+        unsigned int allow_chunked_length : 1;   /* Allow headers with both `Content-Length` and `Transfer-Encoding: chunked` set */
+        unsigned int lenient_http_headers : 1;
+
+        uint32_t nread;          /* # bytes read in various scenarios */
+        uint64_t content_length; /* # bytes in body. `(uint64_t) -1` (all bits one) if no Content-Length header. */
+        unsigned long qs_point;
+
+        /** READ-ONLY **/
+        unsigned char http_major;
+        unsigned char http_minor;
+        unsigned int method : 8;       /* requests only */
+        unsigned int http_errno : 7;
+
+  /* 1 = Upgrade header was present and the parser has exited because of that.
+   * 0 = No upgrade header present.
+   * Should be checked when http_parser_execute() returns in addition to
+   * error checking.
+   */
+        unsigned int upgrade : 1;
+
+        /** PUBLIC **/
+        void* data; /* A pointer to get hook to the "connection" or "socket" object */
+    };
+
+
+    struct http_parser_settings
+    {
+        http_cb on_message_begin;
+        http_cb on_method;
+        http_data_cb on_url;
+        http_data_cb on_header_field;
+        http_data_cb on_header_value;
+        http_cb on_headers_complete;
+        http_data_cb on_body;
+        http_cb on_message_complete;
+    };
+
+
+
+// SOURCE (.c) CODE
+static uint32_t max_header_size = CROW_HTTP_MAX_HEADER_SIZE;
+
+#ifndef CROW_ULLONG_MAX
+# define CROW_ULLONG_MAX ((uint64_t) -1) /* 2^64-1 */
+#endif
+
+#ifndef CROW_MIN
+# define CROW_MIN(a,b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef CROW_ARRAY_SIZE
+# define CROW_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#endif
+
+#ifndef CROW_BIT_AT
+# define CROW_BIT_AT(a, i)                                           \
+  (!!((unsigned int) (a)[(unsigned int) (i) >> 3] &                  \
+   (1 << ((unsigned int) (i) & 7))))
+#endif
+
+#define CROW_SET_ERRNO(e)                                            \
+do {                                                                 \
+  parser->nread = nread;                                             \
+  parser->http_errno = (e);                                          \
+} while(0)
+
+/* Run the notify callback FOR, returning ER if it fails */
+#define CROW_CALLBACK_NOTIFY_(FOR, ER)                               \
+do {                                                                 \
+  assert(CROW_HTTP_PARSER_ERRNO(parser) == CHPE_OK);                 \
+                                                                     \
+  if (CROW_LIKELY(settings->on_##FOR)) {                             \
+    if (CROW_UNLIKELY(0 != settings->on_##FOR(parser))) {            \
+      CROW_SET_ERRNO(CHPE_CB_##FOR);                                 \
+    }                                                                \
+                                                                     \
+    /* We either errored above or got paused; get out */             \
+    if (CROW_UNLIKELY(CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK)) {  \
+      return (ER);                                                   \
+    }                                                                \
+  }                                                                  \
+} while (0)
+
+/* Run the notify callback FOR and consume the current byte */
+#define CROW_CALLBACK_NOTIFY(FOR)            CROW_CALLBACK_NOTIFY_(FOR, p - data + 1)
+
+/* Run the notify callback FOR and don't consume the current byte */
+#define CROW_CALLBACK_NOTIFY_NOADVANCE(FOR)  CROW_CALLBACK_NOTIFY_(FOR, p - data)
+
+/* Run data callback FOR with LEN bytes, returning ER if it fails */
+#define CROW_CALLBACK_DATA_(FOR, LEN, ER)                            \
+do {                                                                 \
+  assert(CROW_HTTP_PARSER_ERRNO(parser) == CHPE_OK);                 \
+                                                                     \
+  if (FOR##_mark) {                                                  \
+    if (CROW_LIKELY(settings->on_##FOR)) {                           \
+      if (CROW_UNLIKELY(0 !=                                         \
+          settings->on_##FOR(parser, FOR##_mark, (LEN)))) {          \
+        CROW_SET_ERRNO(CHPE_CB_##FOR);                               \
+      }                                                              \
+                                                                     \
+      /* We either errored above or got paused; get out */           \
+      if (CROW_UNLIKELY(CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK)) {\
+        return (ER);                                                 \
+      }                                                              \
+    }                                                                \
+    FOR##_mark = NULL;                                               \
+  }                                                                  \
+} while (0)
+
+/* Run the data callback FOR and consume the current byte */
+#define CROW_CALLBACK_DATA(FOR)                                      \
+    CROW_CALLBACK_DATA_(FOR, p - FOR##_mark, p - data + 1)
+
+/* Run the data callback FOR and don't consume the current byte */
+#define CROW_CALLBACK_DATA_NOADVANCE(FOR)                            \
+    CROW_CALLBACK_DATA_(FOR, p - FOR##_mark, p - data)
+
+/* Set the mark FOR; non-destructive if mark is already set */
+#define CROW_MARK(FOR)                                               \
+do {                                                                 \
+  if (!FOR##_mark) {                                                 \
+    FOR##_mark = p;                                                  \
+  }                                                                  \
+} while (0)
+
+/* Don't allow the total size of the HTTP headers (including the status
+ * line) to exceed max_header_size.  This check is here to protect
+ * embedders against denial-of-service attacks where the attacker feeds
+ * us a never-ending header that the embedder keeps buffering.
+ *
+ * This check is arguably the responsibility of embedders but we're doing
+ * it on the embedder's behalf because most won't bother and this way we
+ * make the web a little safer.  max_header_size is still far bigger
+ * than any reasonable request or response so this should never affect
+ * day-to-day operation.
+ */
+#define CROW_COUNT_HEADER_SIZE(V)                                    \
+do {                                                                 \
+  nread += (uint32_t)(V);                                            \
+  if (CROW_UNLIKELY(nread > max_header_size)) {                      \
+    CROW_SET_ERRNO(CHPE_HEADER_OVERFLOW);                            \
+    goto error;                                                      \
+  }                                                                  \
+} while (0)
+#define CROW_REEXECUTE()                                             \
+  goto reexecute;                                                    \
+
+#define CROW_PROXY_CONNECTION "proxy-connection"
+#define CROW_CONNECTION "connection"
+#define CROW_CONTENT_LENGTH "content-length"
+#define CROW_TRANSFER_ENCODING "transfer-encoding"
+#define CROW_UPGRADE "upgrade"
+#define CROW_CHUNKED "chunked"
+#define CROW_KEEP_ALIVE "keep-alive"
+#define CROW_CLOSE "close"
+
+
+
+    enum state
+    {
+        s_dead = 1 /* important that this is > 0 */
+
+        ,
+        s_start_req
+
+        ,
+        s_req_method,
+        s_req_spaces_before_url,
+        s_req_schema,
+        s_req_schema_slash,
+        s_req_schema_slash_slash,
+        s_req_server_start,
+        s_req_server,             // }
+        s_req_server_with_at,     // |
+        s_req_path,               // | The parser recognizes how to switch between these states,
+        s_req_query_string_start, // | however it doesn't process them any differently.
+        s_req_query_string,       // }
+        s_req_http_start,
+        s_req_http_H,
+        s_req_http_HT,
+        s_req_http_HTT,
+        s_req_http_HTTP,
+        s_req_http_I,
+        s_req_http_IC,
+        s_req_http_major,
+        s_req_http_dot,
+        s_req_http_minor,
+        s_req_http_end,
+        s_req_line_almost_done
+
+        ,
+        s_header_field_start,
+        s_header_field,
+        s_header_value_discard_ws,
+        s_header_value_discard_ws_almost_done,
+        s_header_value_discard_lws,
+        s_header_value_start,
+        s_header_value,
+        s_header_value_lws
+
+        ,
+        s_header_almost_done
+
+        ,
+        s_chunk_size_start,
+        s_chunk_size,
+        s_chunk_parameters,
+        s_chunk_size_almost_done
+
+        ,
+        s_headers_almost_done,
+        s_headers_done
+
+        /* Important: 's_headers_done' must be the last 'header' state. All
+         * states beyond this must be 'body' states. It is used for overflow
+         * checking. See the CROW_PARSING_HEADER() macro.
+         */
+
+        ,
+        s_chunk_data,
+        s_chunk_data_almost_done,
+        s_chunk_data_done
+
+        ,
+        s_body_identity,
+        s_body_identity_eof
+
+        ,
+        s_message_done
+    };
+
+
+#define CROW_PARSING_HEADER(state) (state <= s_headers_done)
+
+
+enum header_states
+  { h_general = 0
+  , h_C
+  , h_CO
+  , h_CON
+
+  , h_matching_connection
+  , h_matching_proxy_connection
+  , h_matching_content_length
+  , h_matching_transfer_encoding
+  , h_matching_upgrade
+
+  , h_connection
+  , h_content_length
+  , h_content_length_num
+  , h_content_length_ws
+  , h_transfer_encoding
+  , h_upgrade
+
+  , h_matching_transfer_encoding_token_start
+  , h_matching_transfer_encoding_chunked
+  , h_matching_transfer_encoding_token
+
+  , h_matching_connection_keep_alive
+  , h_matching_connection_close
+
+  , h_transfer_encoding_chunked
+  , h_connection_keep_alive
+  , h_connection_close
+  };
+
+enum http_host_state
+  {
+    s_http_host_dead = 1
+  , s_http_userinfo_start
+  , s_http_userinfo
+  , s_http_host_start
+  , s_http_host_v6_start
+  , s_http_host
+  , s_http_host_v6
+  , s_http_host_v6_end
+  , s_http_host_v6_zone_start
+  , s_http_host_v6_zone
+  , s_http_host_port_start
+  , s_http_host_port
+};
+
+/* Macros for character classes; depends on strict-mode  */
+#define CROW_LOWER(c)            (unsigned char)(c | 0x20)
+#define CROW_IS_ALPHA(c)         (CROW_LOWER(c) >= 'a' && CROW_LOWER(c) <= 'z')
+#define CROW_IS_NUM(c)           ((c) >= '0' && (c) <= '9')
+#define CROW_IS_ALPHANUM(c)      (CROW_IS_ALPHA(c) || CROW_IS_NUM(c))
+//#define CROW_IS_HEX(c)           (CROW_IS_NUM(c) || (CROW_LOWER(c) >= 'a' && CROW_LOWER(c) <= 'f'))
+#define CROW_IS_MARK(c)          ((c) == '-' || (c) == '_' || (c) == '.' || \
+  (c) == '!' || (c) == '~' || (c) == '*' || (c) == '\'' || (c) == '(' ||    \
+  (c) == ')')
+#define CROW_IS_USERINFO_CHAR(c) (CROW_IS_ALPHANUM(c) || CROW_IS_MARK(c) || (c) == '%' || \
+  (c) == ';' || (c) == ':' || (c) == '&' || (c) == '=' || (c) == '+' ||                   \
+  (c) == '$' || (c) == ',')
+
+#define CROW_TOKEN(c)            (tokens[(unsigned char)c])
+#define CROW_IS_URL_CHAR(c)      (CROW_BIT_AT(normal_url_char, (unsigned char)c))
+//#define CROW_IS_HOST_CHAR(c)     (CROW_IS_ALPHANUM(c) || (c) == '.' || (c) == '-')
+
+  /**
+ * Verify that a char is a valid visible (printable) US-ASCII
+ * character or %x80-FF
+ **/
+#define CROW_IS_HEADER_CHAR(ch)                                                     \
+  (ch == cr || ch == lf || ch == 9 || ((unsigned char)ch > 31 && ch != 127))
+
+#define CROW_start_state s_start_req
+
+# define CROW_STRICT_CHECK(cond)                                     \
+do {                                                                 \
+  if (cond) {                                                        \
+    CROW_SET_ERRNO(CHPE_STRICT);                                     \
+    goto error;                                                      \
+  }                                                                  \
+} while (0)
+#define CROW_NEW_MESSAGE() (CROW_start_state)
+
+/* Our URL parser.
+ *
+ * This is designed to be shared by http_parser_execute() for URL validation,
+ * hence it has a state transition + byte-for-byte interface. In addition, it
+ * is meant to be embedded in http_parser_parse_url(), which does the dirty
+ * work of turning state transitions URL components for its API.
+ *
+ * This function should only be invoked with non-space characters. It is
+ * assumed that the caller cares about (and can detect) the transition between
+ * URL and non-URL states by looking for these.
+ */
+inline enum state
+parse_url_char(enum state s, const char ch, http_parser *parser, const char* url_mark, const char* p)
+{
+# define CROW_T(v) 0
+
+
+static const uint8_t normal_url_char[32] = {
+/*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
+        0    |   0    |   0    |   0    |   0    |   0    |   0    |   0,
+/*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
+        0    |CROW_T(2)|  0    |   0    |CROW_T(16)| 0    |   0    |   0,
+/*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
+        0    |   0    |   0    |   0    |   0    |   0    |   0    |   0,
+/*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
+        0    |   0    |   0    |   0    |   0    |   0    |   0    |   0,
+/*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
+        0    |   2    |   4    |   0    |   16   |   32   |   64   |  128,
+/*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |   0,
+/*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/*  80  P    81  Q    82  R    83  S    84  CROW_T    85  U    86  V    87  W  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
+/* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
+        1    |   2    |   4    |   8    |   16   |   32   |   64   |   0, };
+
+#undef CROW_T
+
+  if (ch == ' ' || ch == '\r' || ch == '\n') {
+    return s_dead;
+  }
+  if (ch == '\t' || ch == '\f') {
+    return s_dead;
+  }
+
+  switch (s) {
+    case s_req_spaces_before_url:
+      /* Proxied requests are followed by scheme of an absolute URI (alpha).
+       * All methods except CONNECT are followed by '/' or '*'.
+       */
+
+      if (ch == '/' || ch == '*') {
+        return s_req_path;
+      }
+
+      if (CROW_IS_ALPHA(ch)) {
+        return s_req_schema;
+      }
+
+      break;
+
+    case s_req_schema:
+      if (CROW_IS_ALPHA(ch)) {
+        return s;
+      }
+
+      if (ch == ':') {
+        return s_req_schema_slash;
+      }
+
+      break;
+
+    case s_req_schema_slash:
+      if (ch == '/') {
+        return s_req_schema_slash_slash;
+      }
+
+      break;
+
+    case s_req_schema_slash_slash:
+      if (ch == '/') {
+        return s_req_server_start;
+      }
+
+      break;
+
+    case s_req_server_with_at:
+      if (ch == '@') {
+        return s_dead;
+      }
+
+    /* fall through */
+    case s_req_server_start:
+    case s_req_server:
+      if (ch == '/') {
+        return s_req_path;
+      }
+
+      if (ch == '?') {
+          parser->qs_point = p - url_mark;
+        return s_req_query_string_start;
+      }
+
+      if (ch == '@') {
+        return s_req_server_with_at;
+      }
+
+      if (CROW_IS_USERINFO_CHAR(ch) || ch == '[' || ch == ']') {
+        return s_req_server;
+      }
+
+      break;
+
+    case s_req_path:
+      if (CROW_IS_URL_CHAR(ch)) {
+        return s;
+      }
+      else if (ch == '?')
+      {
+          parser->qs_point = p - url_mark;
+          return s_req_query_string_start;
+      }
+
+      break;
+
+    case s_req_query_string_start:
+    case s_req_query_string:
+      if (CROW_IS_URL_CHAR(ch)) {
+        return s_req_query_string;
+      }
+      else if (ch == '?')
+      {
+          return s_req_query_string;
+      }
+
+      break;
+
+    default:
+      break;
+  }
+
+  /* We should never fall out of the switch above unless there's an error */
+  return s_dead;
+}
+
+inline size_t http_parser_execute (http_parser *parser,
+                            const http_parser_settings *settings,
+                            const char *data,
+                            size_t len)
+{
+
+/* Tokens as defined by rfc 2616. Also lowercases them.
+ *        token       = 1*<any CHAR except CTLs or separators>
+ *     separators     = "(" | ")" | "<" | ">" | "@"
+ *                    | "," | ";" | ":" | "\" | <">
+ *                    | "/" | "[" | "]" | "?" | "="
+ *                    | "{" | "}" | SP  | HT
+ */
+static const char tokens[256] = {
+/*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
+        0,       0,       0,       0,       0,       0,       0,       0,
+/*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
+        0,       0,       0,       0,       0,       0,       0,       0,
+/*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
+        0,       0,       0,       0,       0,       0,       0,       0,
+/*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
+        0,       0,       0,       0,       0,       0,       0,       0,
+/*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
+        0,      '!',      0,      '#',     '$',     '%',     '&',    '\'',
+/*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
+        0,       0,      '*',     '+',      0,      '-',     '.',      0,
+/*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
+       '0',     '1',     '2',     '3',     '4',     '5',     '6',     '7',
+/*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
+       '8',     '9',      0,       0,       0,       0,       0,       0,
+/*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
+        0,      'a',     'b',     'c',     'd',     'e',     'f',     'g',
+/*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
+       'h',     'i',     'j',     'k',     'l',     'm',     'n',     'o',
+/*  80  P    81  Q    82  R    83  S    84  T    85  U    86  V    87  W  */
+       'p',     'q',     'r',     's',     't',     'u',     'v',     'w',
+/*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
+       'x',     'y',     'z',      0,       0,       0,      '^',     '_',
+/*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
+       '`',     'a',     'b',     'c',     'd',     'e',     'f',     'g',
+/* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
+       'h',     'i',     'j',     'k',     'l',     'm',     'n',     'o',
+/* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
+       'p',     'q',     'r',     's',     't',     'u',     'v',     'w',
+/* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
+       'x',     'y',     'z',      0,      '|',      0,      '~',       0 };
+
+
+static const int8_t unhex[256] =
+  {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+  , 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1
+  ,-1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1
+  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+  ,-1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1
+  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
+  };
+
+
+
+  char c, ch;
+  int8_t unhex_val;
+  const char *p = data;
+  const char *header_field_mark = 0;
+  const char *header_value_mark = 0;
+  const char *url_mark = 0;
+  const char *url_start_mark = 0;
+  const char *body_mark = 0;
+  const unsigned int lenient = parser->lenient_http_headers;
+  const unsigned int allow_chunked_length = parser->allow_chunked_length;
+
+  uint32_t nread = parser->nread;
+
+  /* We're in an error state. Don't bother doing anything. */
+  if (CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK) {
+    return 0;
+  }
+
+  if (len == 0) {
+    switch (parser->state) {
+      case s_body_identity_eof:
+        /* Use of CROW_CALLBACK_NOTIFY() here would erroneously return 1 byte read if we got paused. */
+        CROW_CALLBACK_NOTIFY_NOADVANCE(message_complete);
+        return 0;
+
+      case s_dead:
+      case s_start_req:
+        return 0;
+
+      default:
+        CROW_SET_ERRNO(CHPE_INVALID_EOF_STATE);
+        return 1;
+    }
+  }
+
+
+  if (parser->state == s_header_field)
+    header_field_mark = data;
+  if (parser->state == s_header_value)
+    header_value_mark = data;
+  switch (parser->state) {
+  case s_req_path:
+  case s_req_schema:
+  case s_req_schema_slash:
+  case s_req_schema_slash_slash:
+  case s_req_server_start:
+  case s_req_server:
+  case s_req_server_with_at:
+  case s_req_query_string_start:
+  case s_req_query_string:
+    url_mark = data;
+    break;
+  default:
+    break;
+  }
+
+  for (p=data; p != data + len; p++) {
+    ch = *p;
+
+    if (CROW_PARSING_HEADER(parser->state))
+      CROW_COUNT_HEADER_SIZE(1);
+
+reexecute:
+    switch (parser->state) {
+
+      case s_dead:
+        /* this state is used after a 'Connection: close' message
+         * the parser will error out if it reads another message
+         */
+        if (CROW_LIKELY(ch == cr || ch == lf))
+          break;
+
+        CROW_SET_ERRNO(CHPE_CLOSED_CONNECTION);
+        goto error;
+
+      case s_start_req:
+      {
+        if (ch == cr || ch == lf)
+          break;
+        parser->flags = 0;
+        parser->uses_transfer_encoding = 0;
+        parser->content_length = CROW_ULLONG_MAX;
+
+        if (CROW_UNLIKELY(!CROW_IS_ALPHA(ch))) {
+          CROW_SET_ERRNO(CHPE_INVALID_METHOD);
+          goto error;
+        }
+
+        parser->method = 0;
+        parser->index = 1;
+        switch (ch) {
+          case 'A': parser->method = (unsigned)HTTPMethod::Acl;                                                              break;
+          case 'B': parser->method = (unsigned)HTTPMethod::Bind;                                                             break;
+          case 'C': parser->method = (unsigned)HTTPMethod::Connect;   /* or COPY, CHECKOUT */                                break;
+          case 'D': parser->method = (unsigned)HTTPMethod::Delete;                                                           break;
+          case 'G': parser->method = (unsigned)HTTPMethod::Get;                                                              break;
+          case 'H': parser->method = (unsigned)HTTPMethod::Head;                                                             break;
+          case 'L': parser->method = (unsigned)HTTPMethod::Lock;      /* or LINK */                                          break;
+          case 'M': parser->method = (unsigned)HTTPMethod::MkCol;     /* or MOVE, MKACTIVITY, MERGE, M-SEARCH, MKCALENDAR */ break;
+          case 'N': parser->method = (unsigned)HTTPMethod::Notify;                                                           break;
+          case 'O': parser->method = (unsigned)HTTPMethod::Options;                                                          break;
+          case 'P': parser->method = (unsigned)HTTPMethod::Post;      /* or PROPFIND|PROPPATCH|PUT|PATCH|PURGE */            break;
+          case 'R': parser->method = (unsigned)HTTPMethod::Report;    /* or REBIND */                                        break;
+          case 'S': parser->method = (unsigned)HTTPMethod::Subscribe; /* or SEARCH, SOURCE */                                break;
+          case 'T': parser->method = (unsigned)HTTPMethod::Trace;                                                            break;
+          case 'U': parser->method = (unsigned)HTTPMethod::Unlock;    /* or UNSUBSCRIBE, UNBIND, UNLINK */                   break;
+          default:
+            CROW_SET_ERRNO(CHPE_INVALID_METHOD);
+            goto error;
+        }
+        parser->state = s_req_method;
+
+        CROW_CALLBACK_NOTIFY(message_begin);
+
+        break;
+      }
+
+      case s_req_method:
+      {
+        const char *matcher;
+        if (CROW_UNLIKELY(ch == '\0')) {
+          CROW_SET_ERRNO(CHPE_INVALID_METHOD);
+          goto error;
+        }
+
+        matcher = method_strings[parser->method];
+        if (ch == ' ' && matcher[parser->index] == '\0') {
+          parser->state = s_req_spaces_before_url;
+        } else if (ch == matcher[parser->index]) {
+          ; /* nada */
+        } else if ((ch >= 'A' && ch <= 'Z') || ch == '-') {
+
+          switch (parser->method << 16 | parser->index << 8 | ch) {
+#define CROW_XX(meth, pos, ch, new_meth) \
+            case ((unsigned)HTTPMethod::meth << 16 | pos << 8 | ch): \
+              parser->method = (unsigned)HTTPMethod::new_meth; break;
+
+            CROW_XX(Post,      1, 'U', Put)
+            CROW_XX(Post,      1, 'A', Patch)
+            CROW_XX(Post,      1, 'R', Propfind)
+            CROW_XX(Put,       2, 'R', Purge)
+            CROW_XX(Connect,   1, 'H', Checkout)
+            CROW_XX(Connect,   2, 'P', Copy)
+            CROW_XX(MkCol,     1, 'O', Move)
+            CROW_XX(MkCol,     1, 'E', Merge)
+            CROW_XX(MkCol,     1, '-', MSearch)
+            CROW_XX(MkCol,     2, 'A', MkActivity)
+            CROW_XX(MkCol,     3, 'A', MkCalendar)
+            CROW_XX(Subscribe, 1, 'E', Search)
+            CROW_XX(Subscribe, 1, 'O', Source)
+            CROW_XX(Report,    2, 'B', Rebind)
+            CROW_XX(Propfind,  4, 'P', Proppatch)
+            CROW_XX(Lock,      1, 'I', Link)
+            CROW_XX(Unlock,    2, 'S', Unsubscribe)
+            CROW_XX(Unlock,    2, 'B', Unbind)
+            CROW_XX(Unlock,    3, 'I', Unlink)
+#undef CROW_XX
+            default:
+              CROW_SET_ERRNO(CHPE_INVALID_METHOD);
+              goto error;
+          }
+        } else {
+          CROW_SET_ERRNO(CHPE_INVALID_METHOD);
+          goto error;
+        }
+
+        CROW_CALLBACK_NOTIFY_NOADVANCE(method);
+
+        ++parser->index;
+        break;
+      }
+
+      case s_req_spaces_before_url:
+      {
+        if (ch == ' ') break;
+
+        CROW_MARK(url);
+        CROW_MARK(url_start);
+        if (parser->method == (unsigned)HTTPMethod::Connect) {
+          parser->state = s_req_server_start;
+        }
+
+        parser->state = parse_url_char(static_cast<state>(parser->state), ch, parser, url_start_mark, p);
+        if (CROW_UNLIKELY(parser->state == s_dead)) {
+          CROW_SET_ERRNO(CHPE_INVALID_URL);
+          goto error;
+        }
+
+        break;
+      }
+
+      case s_req_schema:
+      case s_req_schema_slash:
+      case s_req_schema_slash_slash:
+      case s_req_server_start:
+      {
+        switch (ch) {
+          /* No whitespace allowed here */
+          case ' ':
+          case cr:
+          case lf:
+            CROW_SET_ERRNO(CHPE_INVALID_URL);
+            goto error;
+          default:
+            parser->state = parse_url_char(static_cast<state>(parser->state), ch, parser, url_start_mark, p);
+            if (CROW_UNLIKELY(parser->state == s_dead)) {
+              CROW_SET_ERRNO(CHPE_INVALID_URL);
+              goto error;
+            }
+        }
+
+        break;
+      }
+
+      case s_req_server:
+      case s_req_server_with_at:
+      case s_req_path:
+      case s_req_query_string_start:
+      case s_req_query_string:
+      {
+        switch (ch) {
+          case ' ':
+            parser->state = s_req_http_start;
+            CROW_CALLBACK_DATA(url);
+            break;
+          case cr: // No space after URL means no HTTP version. Which means the request is using HTTP/0.9
+          case lf:
+            if (CROW_UNLIKELY(parser->method != (unsigned)HTTPMethod::Get)) // HTTP/0.9 doesn't define any method other than GET
+            {
+              parser->state = s_dead;
+              CROW_SET_ERRNO(CHPE_INVALID_VERSION);
+              goto error;
+            }
+            parser->http_major = 0;
+            parser->http_minor = 9;
+            parser->state = (ch == cr) ?
+              s_req_line_almost_done :
+              s_header_field_start;
+            CROW_CALLBACK_DATA(url);
+            break;
+          default:
+            parser->state = parse_url_char(static_cast<state>(parser->state), ch, parser, url_start_mark, p);
+            if (CROW_UNLIKELY(parser->state == s_dead)) {
+              CROW_SET_ERRNO(CHPE_INVALID_URL);
+              goto error;
+            }
+        }
+        break;
+      }
+
+      case s_req_http_start:
+        switch (ch) {
+          case ' ':
+            break;
+          case 'H':
+            parser->state = s_req_http_H;
+            break;
+          case 'I':
+            if (parser->method == (unsigned)HTTPMethod::Source) {
+              parser->state = s_req_http_I;
+              break;
+            }
+            /* fall through */
+          default:
+            CROW_SET_ERRNO(CHPE_INVALID_CONSTANT);
+            goto error;
+        }
+        break;
+
+      case s_req_http_H:
+        CROW_STRICT_CHECK(ch != 'T');
+        parser->state = s_req_http_HT;
+        break;
+
+      case s_req_http_HT:
+        CROW_STRICT_CHECK(ch != 'T');
+        parser->state = s_req_http_HTT;
+        break;
+
+      case s_req_http_HTT:
+        CROW_STRICT_CHECK(ch != 'P');
+        parser->state = s_req_http_HTTP;
+        break;
+
+      case s_req_http_I:
+        CROW_STRICT_CHECK(ch != 'C');
+        parser->state = s_req_http_IC;
+        break;
+
+      case s_req_http_IC:
+        CROW_STRICT_CHECK(ch != 'E');
+        parser->state = s_req_http_HTTP;  /* Treat "ICE" as "HTTP". */
+        break;
+
+      case s_req_http_HTTP:
+        CROW_STRICT_CHECK(ch != '/');
+        parser->state = s_req_http_major;
+        break;
+
+      /* dot */
+      case s_req_http_major:
+        if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
+          CROW_SET_ERRNO(CHPE_INVALID_VERSION);
+          goto error;
+        }
+
+        parser->http_major = ch - '0';
+        parser->state = s_req_http_dot;
+        break;
+
+      case s_req_http_dot:
+      {
+        if (CROW_UNLIKELY(ch != '.')) {
+          CROW_SET_ERRNO(CHPE_INVALID_VERSION);
+          goto error;
+        }
+
+        parser->state = s_req_http_minor;
+        break;
+      }
+
+      /* minor HTTP version */
+      case s_req_http_minor:
+        if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
+          CROW_SET_ERRNO(CHPE_INVALID_VERSION);
+          goto error;
+        }
+
+        parser->http_minor = ch - '0';
+        parser->state = s_req_http_end;
+        break;
+
+      /* end of request line */
+      case s_req_http_end:
+      {
+        if (ch == cr) {
+          parser->state = s_req_line_almost_done;
+          break;
+        }
+
+        if (ch == lf) {
+          parser->state = s_header_field_start;
+          break;
+        }
+
+        CROW_SET_ERRNO(CHPE_INVALID_VERSION);
+        goto error;
+        break;
+      }
+
+      /* end of request line */
+      case s_req_line_almost_done:
+      {
+        if (CROW_UNLIKELY(ch != lf)) {
+          CROW_SET_ERRNO(CHPE_LF_EXPECTED);
+          goto error;
+        }
+
+        parser->state = s_header_field_start;
+        break;
+      }
+
+      case s_header_field_start:
+      {
+        if (ch == cr) {
+          parser->state = s_headers_almost_done;
+          break;
+        }
+
+        if (ch == lf) {
+          /* they might be just sending \n instead of \r\n so this would be
+           * the second \n to denote the end of headers*/
+          parser->state = s_headers_almost_done;
+          CROW_REEXECUTE();
+        }
+
+        c = CROW_TOKEN(ch);
+
+        if (CROW_UNLIKELY(!c)) {
+          CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
+          goto error;
+        }
+
+        CROW_MARK(header_field);
+
+        parser->index = 0;
+        parser->state = s_header_field;
+
+        switch (c) {
+          case 'c':
+            parser->header_state = h_C;
+            break;
+
+          case 'p':
+            parser->header_state = h_matching_proxy_connection;
+            break;
+
+          case 't':
+            parser->header_state = h_matching_transfer_encoding;
+            break;
+
+          case 'u':
+            parser->header_state = h_matching_upgrade;
+            break;
+
+          default:
+            parser->header_state = h_general;
+            break;
+        }
+        break;
+      }
+
+      case s_header_field:
+      {
+        const char* start = p;
+        for (; p != data + len; p++) {
+          ch = *p;
+          c = CROW_TOKEN(ch);
+
+          if (!c)
+            break;
+
+          switch (parser->header_state) {
+            case h_general: {
+              size_t left = data + len - p;
+              const char* pe = p + CROW_MIN(left, max_header_size);
+              while (p+1 < pe && CROW_TOKEN(p[1])) {
+                p++;
+              }
+              break;
+            }
+
+            case h_C:
+              parser->index++;
+              parser->header_state = (c == 'o' ? h_CO : h_general);
+              break;
+
+            case h_CO:
+              parser->index++;
+              parser->header_state = (c == 'n' ? h_CON : h_general);
+              break;
+
+            case h_CON:
+              parser->index++;
+              switch (c) {
+                case 'n':
+                  parser->header_state = h_matching_connection;
+                  break;
+                case 't':
+                  parser->header_state = h_matching_content_length;
+                  break;
+                default:
+                  parser->header_state = h_general;
+                  break;
+              }
+              break;
+
+            /* connection */
+
+            case h_matching_connection:
+              parser->index++;
+              if (parser->index > sizeof(CROW_CONNECTION)-1 || c != CROW_CONNECTION[parser->index]) {
+                parser->header_state = h_general;
+              } else if (parser->index == sizeof(CROW_CONNECTION)-2) {
+                parser->header_state = h_connection;
+              }
+              break;
+
+            /* proxy-connection */
+
+            case h_matching_proxy_connection:
+              parser->index++;
+              if (parser->index > sizeof(CROW_PROXY_CONNECTION)-1 || c != CROW_PROXY_CONNECTION[parser->index]) {
+                parser->header_state = h_general;
+              } else if (parser->index == sizeof(CROW_PROXY_CONNECTION)-2) {
+                parser->header_state = h_connection;
+              }
+              break;
+
+            /* content-length */
+
+            case h_matching_content_length:
+              parser->index++;
+              if (parser->index > sizeof(CROW_CONTENT_LENGTH)-1 || c != CROW_CONTENT_LENGTH[parser->index]) {
+                parser->header_state = h_general;
+              } else if (parser->index == sizeof(CROW_CONTENT_LENGTH)-2) {
+                parser->header_state = h_content_length;
+              }
+              break;
+
+            /* transfer-encoding */
+
+            case h_matching_transfer_encoding:
+              parser->index++;
+              if (parser->index > sizeof(CROW_TRANSFER_ENCODING)-1 || c != CROW_TRANSFER_ENCODING[parser->index]) {
+                parser->header_state = h_general;
+              } else if (parser->index == sizeof(CROW_TRANSFER_ENCODING)-2) {
+                parser->header_state = h_transfer_encoding;
+                parser->uses_transfer_encoding = 1;
+              }
+              break;
+
+            /* upgrade */
+
+            case h_matching_upgrade:
+              parser->index++;
+              if (parser->index > sizeof(CROW_UPGRADE)-1 || c != CROW_UPGRADE[parser->index]) {
+                parser->header_state = h_general;
+              } else if (parser->index == sizeof(CROW_UPGRADE)-2) {
+                parser->header_state = h_upgrade;
+              }
+              break;
+
+            case h_connection:
+            case h_content_length:
+            case h_transfer_encoding:
+            case h_upgrade:
+              if (ch != ' ') parser->header_state = h_general;
+              break;
+
+            default:
+              assert(0 && "Unknown header_state");
+              break;
+          }
+        }
+
+        if (p == data + len) {
+          --p;
+          CROW_COUNT_HEADER_SIZE(p - start);
+          break;
+        }
+
+        CROW_COUNT_HEADER_SIZE(p - start);
+
+        if (ch == ':') {
+          parser->state = s_header_value_discard_ws;
+          CROW_CALLBACK_DATA(header_field);
+          break;
+        }
+/* RFC-7230 Sec 3.2.4 expressly forbids line-folding in header field-names.
+        if (ch == cr) {
+          parser->state = s_header_almost_done;
+          CROW_CALLBACK_DATA(header_field);
+          break;
+        }
+
+        if (ch == lf) {
+          parser->state = s_header_field_start;
+          CROW_CALLBACK_DATA(header_field);
+          break;
+        }
+*/
+        CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
+        goto error;
+      }
+
+      case s_header_value_discard_ws:
+        if (ch == ' ' || ch == '\t') break;
+
+        if (ch == cr) {
+          parser->state = s_header_value_discard_ws_almost_done;
+          break;
+        }
+
+        if (ch == lf) {
+          parser->state = s_header_value_discard_lws;
+          break;
+        }
+
+        /* fall through */
+
+      case s_header_value_start:
+      {
+        CROW_MARK(header_value);
+
+        parser->state = s_header_value;
+        parser->index = 0;
+
+        c = CROW_LOWER(ch);
+
+        switch (parser->header_state) {
+          case h_upgrade:
+            // Crow does not support HTTP/2 at the moment.
+            // According to the RFC https://datatracker.ietf.org/doc/html/rfc7540#section-3.2
+            // "A server that does not support HTTP/2 can respond to the request as though the Upgrade header field were absent"
+            // => `F_UPGRADE` is not set if the header starts by "h2".
+            // This prevents the parser from skipping the request body.
+            if (ch != 'h' || p+1 == (data + len) || *(p+1) != '2') {
+              parser->flags |= F_UPGRADE;
+            }
+            parser->header_state = h_general;
+            break;
+
+          case h_transfer_encoding:
+            /* looking for 'Transfer-Encoding: chunked' */
+            if ('c' == c) {
+              parser->header_state = h_matching_transfer_encoding_chunked;
+            } else {
+              parser->header_state = h_matching_transfer_encoding_token;
+            }
+            break;
+
+          /* Multi-value `Transfer-Encoding` header */
+          case h_matching_transfer_encoding_token_start:
+            break;
+
+          case h_content_length:
+            if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
+              CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
+              goto error;
+            }
+
+            if (parser->flags & F_CONTENTLENGTH) {
+              CROW_SET_ERRNO(CHPE_UNEXPECTED_CONTENT_LENGTH);
+              goto error;
+            }
+            parser->flags |= F_CONTENTLENGTH;
+            parser->content_length = ch - '0';
+            parser->header_state = h_content_length_num;
+            break;
+
+          /* when obsolete line folding is encountered for content length
+           * continue to the s_header_value state */
+          case h_content_length_ws:
+            break;
+
+          case h_connection:
+            /* looking for 'Connection: keep-alive' */
+            if (c == 'k') {
+              parser->header_state = h_matching_connection_keep_alive;
+            /* looking for 'Connection: close' */
+            } else if (c == 'c') {
+              parser->header_state = h_matching_connection_close;
+            } else if (c == ' ' || c == '\t') {
+              /* Skip lws */
+            } else {
+              parser->header_state = h_general;
+            }
+            break;
+
+          default:
+            parser->header_state = h_general;
+            break;
+        }
+        break;
+      }
+
+      case s_header_value:
+      {
+        const char* start = p;
+        enum header_states h_state = static_cast<header_states>(parser->header_state);
+        for (; p != data + len; p++) {
+          ch = *p;
+
+          if (ch == cr) {
+            parser->state = s_header_almost_done;
+            parser->header_state = h_state;
+            CROW_CALLBACK_DATA(header_value);
+            break;
+          }
+
+          if (ch == lf) {
+            parser->state = s_header_almost_done;
+            CROW_COUNT_HEADER_SIZE(p - start);
+            parser->header_state = h_state;
+            CROW_CALLBACK_DATA_NOADVANCE(header_value);
+            CROW_REEXECUTE();
+          }
+
+          if (!lenient && !CROW_IS_HEADER_CHAR(ch)) {
+            CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
+            goto error;
+          }
+
+          c = CROW_LOWER(ch);
+
+          switch (h_state) {
+            case h_general:
+              {
+                size_t left = data + len - p;
+                const char* pe = p + CROW_MIN(left, max_header_size);
+
+                for (; p != pe; p++) {
+                  ch = *p;
+                  if (ch == cr || ch == lf) {
+                    --p;
+                    break;
+                  }
+                  if (!lenient && !CROW_IS_HEADER_CHAR(ch)) {
+                    CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
+                    goto error;
+                  }
+                }
+                if (p == data + len)
+                  --p;
+                break;
+              }
+
+            case h_connection:
+            case h_transfer_encoding:
+              assert(0 && "Shouldn't get here.");
+              break;
+
+            case h_content_length:
+              if (ch == ' ') break;
+              h_state = h_content_length_num;
+              /* fall through */
+
+            case h_content_length_num:
+            {
+              uint64_t t;
+
+              if (ch == ' ') {
+                h_state = h_content_length_ws;
+                break;
+              }
+
+              if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
+                CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
+                parser->header_state = h_state;
+                goto error;
+              }
+
+              t = parser->content_length;
+              t *= 10;
+              t += ch - '0';
+
+              /* Overflow? Test against a conservative limit for simplicity. */
+              if (CROW_UNLIKELY((CROW_ULLONG_MAX - 10) / 10 < parser->content_length)) {
+                CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
+                parser->header_state = h_state;
+                goto error;
+              }
+
+              parser->content_length = t;
+              break;
+            }
+
+            case h_content_length_ws:
+              if (ch == ' ') break;
+              CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
+              parser->header_state = h_state;
+              goto error;
+
+            /* Transfer-Encoding: chunked */
+            case h_matching_transfer_encoding_token_start:
+              /* looking for 'Transfer-Encoding: chunked' */
+              if ('c' == c) {
+                h_state = h_matching_transfer_encoding_chunked;
+              } else if (CROW_TOKEN(c)) {
+                /* TODO(indutny): similar code below does this, but why?
+                 * At the very least it seems to be inconsistent given that
+                 * h_matching_transfer_encoding_token does not check for
+                 * `STRICT_TOKEN`
+                 */
+                h_state = h_matching_transfer_encoding_token;
+              } else if (c == ' ' || c == '\t') {
+                /* Skip lws */
+              } else {
+                h_state = h_general;
+              }
+              break;
+
+            case h_matching_transfer_encoding_chunked:
+              parser->index++;
+              if (parser->index > sizeof(CROW_CHUNKED)-1 || c != CROW_CHUNKED[parser->index]) {
+                h_state = h_matching_transfer_encoding_token;
+              } else if (parser->index == sizeof(CROW_CHUNKED)-2) {
+                h_state = h_transfer_encoding_chunked;
+              }
+              break;
+
+            case h_matching_transfer_encoding_token:
+              if (ch == ',') {
+                h_state = h_matching_transfer_encoding_token_start;
+                parser->index = 0;
+              }
+              break;
+
+            /* looking for 'Connection: keep-alive' */
+            case h_matching_connection_keep_alive:
+              parser->index++;
+              if (parser->index > sizeof(CROW_KEEP_ALIVE)-1 || c != CROW_KEEP_ALIVE[parser->index]) {
+                h_state = h_general;
+              } else if (parser->index == sizeof(CROW_KEEP_ALIVE)-2) {
+                h_state = h_connection_keep_alive;
+              }
+              break;
+
+            /* looking for 'Connection: close' */
+            case h_matching_connection_close:
+              parser->index++;
+              if (parser->index > sizeof(CROW_CLOSE)-1 || c != CROW_CLOSE[parser->index]) {
+                h_state = h_general;
+              } else if (parser->index == sizeof(CROW_CLOSE)-2) {
+                h_state = h_connection_close;
+              }
+              break;
+
+              // Edited from original (because of commits that werent included)
+            case h_transfer_encoding_chunked:
+              if (ch != ' ') h_state = h_matching_transfer_encoding_token;
+              break;
+            case h_connection_keep_alive:
+            case h_connection_close:
+              if (ch != ' ') h_state = h_general;
+              break;
+
+            default:
+              parser->state = s_header_value;
+              h_state = h_general;
+              break;
+          }
+        }
+        parser->header_state = h_state;
+
+
+        if (p == data + len)
+          --p;
+
+        CROW_COUNT_HEADER_SIZE(p - start);
+        break;
+      }
+
+      case s_header_almost_done:
+      {
+        if (CROW_UNLIKELY(ch != lf)) {
+          CROW_SET_ERRNO(CHPE_LF_EXPECTED);
+          goto error;
+        }
+
+        parser->state = s_header_value_lws;
+        break;
+      }
+
+      case s_header_value_lws:
+      {
+        if (ch == ' ' || ch == '\t') {
+          if (parser->header_state == h_content_length_num) {
+              /* treat obsolete line folding as space */
+              parser->header_state = h_content_length_ws;
+          }
+          parser->state = s_header_value_start;
+          CROW_REEXECUTE();
+        }
+
+        /* finished the header */
+        switch (parser->header_state) {
+          case h_connection_keep_alive:
+            parser->flags |= F_CONNECTION_KEEP_ALIVE;
+            break;
+          case h_connection_close:
+            parser->flags |= F_CONNECTION_CLOSE;
+            break;
+          case h_transfer_encoding_chunked:
+            parser->flags |= F_CHUNKED;
+            break;
+          default:
+            break;
+        }
+
+        parser->state = s_header_field_start;
+        CROW_REEXECUTE();
+      }
+
+      case s_header_value_discard_ws_almost_done:
+      {
+        CROW_STRICT_CHECK(ch != lf);
+        parser->state = s_header_value_discard_lws;
+        break;
+      }
+
+      case s_header_value_discard_lws:
+      {
+        if (ch == ' ' || ch == '\t') {
+          parser->state = s_header_value_discard_ws;
+          break;
+        } else {
+          /* header value was empty */
+          CROW_MARK(header_value);
+          parser->state = s_header_field_start;
+          CROW_CALLBACK_DATA_NOADVANCE(header_value);
+          CROW_REEXECUTE();
+        }
+      }
+
+      case s_headers_almost_done:
+      {
+        CROW_STRICT_CHECK(ch != lf);
+
+        if (parser->flags & F_TRAILING) {
+          /* End of a chunked request */
+          CROW_CALLBACK_NOTIFY(message_complete);
+          break;
+        }
+
+        /* Cannot use transfer-encoding and a content-length header together
+           per the HTTP specification. (RFC 7230 Section 3.3.3) */
+        if ((parser->uses_transfer_encoding == 1) &&
+            (parser->flags & F_CONTENTLENGTH)) {
+          /* Allow it for lenient parsing as long as `Transfer-Encoding` is
+           * not `chunked` or allow_length_with_encoding is set
+           */
+          if (parser->flags & F_CHUNKED) {
+            if (!allow_chunked_length) {
+              CROW_SET_ERRNO(CHPE_UNEXPECTED_CONTENT_LENGTH);
+              goto error;
+            }
+          } else if (!lenient) {
+            CROW_SET_ERRNO(CHPE_UNEXPECTED_CONTENT_LENGTH);
+            goto error;
+          }
+        }
+
+        parser->state = s_headers_done;
+
+        /* Set this here so that on_headers_complete() callbacks can see it */
+        parser->upgrade =
+          (parser->flags & F_UPGRADE || parser->method == (unsigned)HTTPMethod::Connect);
+
+        /* Here we call the headers_complete callback. This is somewhat
+         * different than other callbacks because if the user returns 1, we
+         * will interpret that as saying that this message has no body. This
+         * is needed for the annoying case of recieving a response to a HEAD
+         * request.
+         *
+         * We'd like to use CROW_CALLBACK_NOTIFY_NOADVANCE() here but we cannot, so
+         * we have to simulate it by handling a change in errno below.
+         */
+        if (settings->on_headers_complete) {
+          switch (settings->on_headers_complete(parser)) {
+            case 0:
+              break;
+
+            case 2:
+              parser->upgrade = 1;
+              //break;
+
+            /* fall through */
+            case 1:
+              parser->flags |= F_SKIPBODY;
+              break;
+
+            default:
+              CROW_SET_ERRNO(CHPE_CB_headers_complete);
+              parser->nread = nread;
+              return p - data; /* Error */
+          }
+        }
+
+        if (CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK) {
+          parser->nread = nread;
+          return p - data;
+        }
+
+        CROW_REEXECUTE();
+      }
+
+      case s_headers_done:
+      {
+        CROW_STRICT_CHECK(ch != lf);
+
+        parser->nread = 0;
+        nread = 0;
+
+        /* Exit, the rest of the connect is in a different protocol. */
+        if (parser->upgrade) {
+          CROW_CALLBACK_NOTIFY(message_complete);
+          parser->nread = nread;
+          return (p - data) + 1;
+        }
+
+        if (parser->flags & F_SKIPBODY) {
+          CROW_CALLBACK_NOTIFY(message_complete);
+        } else if (parser->flags & F_CHUNKED) {
+          /* chunked encoding - ignore Content-Length header,
+           * prepare for a chunk */
+            parser->state = s_chunk_size_start;
+        }
+        else if (parser->uses_transfer_encoding == 1)
+        {
+            if (!lenient)
+            {
+                /* RFC 7230 3.3.3 */
+
+                /* If a Transfer-Encoding header field
+             * is present in a request and the chunked transfer coding is not
+             * the final encoding, the message body length cannot be determined
+             * reliably; the server MUST respond with the 400 (Bad Request)
+             * status code and then close the connection.
+             */
+                CROW_SET_ERRNO(CHPE_INVALID_TRANSFER_ENCODING);
+                parser->nread = nread;
+                return (p - data); /* Error */
+            }
+            else
+            {
+                /* RFC 7230 3.3.3 */
+
+                /* If a Transfer-Encoding header field is present in a response and
+             * the chunked transfer coding is not the final encoding, the
+             * message body length is determined by reading the connection until
+             * it is closed by the server.
+             */
+                parser->state = s_body_identity_eof;
+            }
+        }
+        else
+        {
+            if (parser->content_length == 0)
+            {
+                /* Content-Length header given but zero: Content-Length: 0\r\n */
+                CROW_CALLBACK_NOTIFY(message_complete);
+            }
+            else if (parser->content_length != CROW_ULLONG_MAX)
+            {
+                /* Content-Length header given and non-zero */
+                parser->state = s_body_identity;
+            }
+            else
+            {
+                /* Assume content-length 0 - read the next */
+                CROW_CALLBACK_NOTIFY(message_complete);
+            }
+        }
+
+        break;
+      }
+
+      case s_body_identity:
+      {
+        uint64_t to_read = CROW_MIN(parser->content_length,
+                               (uint64_t) ((data + len) - p));
+
+        assert(parser->content_length != 0
+            && parser->content_length != CROW_ULLONG_MAX);
+
+        /* The difference between advancing content_length and p is because
+         * the latter will automaticaly advance on the next loop iteration.
+         * Further, if content_length ends up at 0, we want to see the last
+         * byte again for our message complete callback.
+         */
+        CROW_MARK(body);
+        parser->content_length -= to_read;
+        p += to_read - 1;
+
+        if (parser->content_length == 0) {
+          parser->state = s_message_done;
+
+          /* Mimic CROW_CALLBACK_DATA_NOADVANCE() but with one extra byte.
+           *
+           * The alternative to doing this is to wait for the next byte to
+           * trigger the data callback, just as in every other case. The
+           * problem with this is that this makes it difficult for the test
+           * harness to distinguish between complete-on-EOF and
+           * complete-on-length. It's not clear that this distinction is
+           * important for applications, but let's keep it for now.
+           */
+          CROW_CALLBACK_DATA_(body, p - body_mark + 1, p - data);
+          CROW_REEXECUTE();
+        }
+
+        break;
+      }
+
+      /* read until EOF */
+      case s_body_identity_eof:
+        CROW_MARK(body);
+        p = data + len - 1;
+
+        break;
+
+      case s_message_done:
+        CROW_CALLBACK_NOTIFY(message_complete);
+        break;
+
+      case s_chunk_size_start:
+      {
+        assert(nread == 1);
+        assert(parser->flags & F_CHUNKED);
+
+        unhex_val = unhex[static_cast<unsigned char>(ch)];
+        if (CROW_UNLIKELY(unhex_val == -1)) {
+          CROW_SET_ERRNO(CHPE_INVALID_CHUNK_SIZE);
+          goto error;
+        }
+
+        parser->content_length = unhex_val;
+        parser->state = s_chunk_size;
+        break;
+      }
+
+      case s_chunk_size:
+      {
+        uint64_t t;
+
+        assert(parser->flags & F_CHUNKED);
+
+        if (ch == cr) {
+          parser->state = s_chunk_size_almost_done;
+          break;
+        }
+
+        unhex_val = unhex[static_cast<unsigned char>(ch)];
+
+        if (unhex_val == -1) {
+          if (ch == ';' || ch == ' ') {
+            parser->state = s_chunk_parameters;
+            break;
+          }
+
+          CROW_SET_ERRNO(CHPE_INVALID_CHUNK_SIZE);
+          goto error;
+        }
+
+        t = parser->content_length;
+        t *= 16;
+        t += unhex_val;
+
+        /* Overflow? Test against a conservative limit for simplicity. */
+        if (CROW_UNLIKELY((CROW_ULLONG_MAX - 16) / 16 < parser->content_length)) {
+          CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
+          goto error;
+        }
+
+        parser->content_length = t;
+        break;
+      }
+
+      case s_chunk_parameters:
+      {
+        assert(parser->flags & F_CHUNKED);
+        /* just ignore this shit. TODO check for overflow */
+        if (ch == cr) {
+          parser->state = s_chunk_size_almost_done;
+          break;
+        }
+        break;
+      }
+
+      case s_chunk_size_almost_done:
+      {
+        assert(parser->flags & F_CHUNKED);
+        CROW_STRICT_CHECK(ch != lf);
+
+        parser->nread = 0;
+        nread = 0;
+
+        if (parser->content_length == 0) {
+          parser->flags |= F_TRAILING;
+          parser->state = s_header_field_start;
+        } else {
+          parser->state = s_chunk_data;
+        }
+        break;
+      }
+
+      case s_chunk_data:
+      {
+        uint64_t to_read = CROW_MIN(parser->content_length,
+                               (uint64_t) ((data + len) - p));
+
+        assert(parser->flags & F_CHUNKED);
+        assert(parser->content_length != 0
+            && parser->content_length != CROW_ULLONG_MAX);
+
+        /* See the explanation in s_body_identity for why the content
+         * length and data pointers are managed this way.
+         */
+        CROW_MARK(body);
+        parser->content_length -= to_read;
+        p += to_read - 1;
+
+        if (parser->content_length == 0) {
+          parser->state = s_chunk_data_almost_done;
+        }
+
+        break;
+      }
+
+      case s_chunk_data_almost_done:
+        assert(parser->flags & F_CHUNKED);
+        assert(parser->content_length == 0);
+        CROW_STRICT_CHECK(ch != cr);
+        parser->state = s_chunk_data_done;
+        CROW_CALLBACK_DATA(body);
+        break;
+
+      case s_chunk_data_done:
+        assert(parser->flags & F_CHUNKED);
+        CROW_STRICT_CHECK(ch != lf);
+        parser->nread = 0;
+        nread = 0;
+        parser->state = s_chunk_size_start;
+        break;
+
+      default:
+        assert(0 && "unhandled state");
+        CROW_SET_ERRNO(CHPE_INVALID_INTERNAL_STATE);
+        goto error;
+    }
+  }
+
+  /* Run callbacks for any marks that we have leftover after we ran out of
+   * bytes. There should be at most one of these set, so it's OK to invoke
+   * them in series (unset marks will not result in callbacks).
+   *
+   * We use the NOADVANCE() variety of callbacks here because 'p' has already
+   * overflowed 'data' and this allows us to correct for the off-by-one that
+   * we'd otherwise have (since CROW_CALLBACK_DATA() is meant to be run with a 'p'
+   * value that's in-bounds).
+   */
+
+  assert(((header_field_mark ? 1 : 0) +
+          (header_value_mark ? 1 : 0) +
+          (url_mark ? 1 : 0)  +
+          (body_mark ? 1 : 0)) <= 1);
+
+  CROW_CALLBACK_DATA_NOADVANCE(header_field);
+  CROW_CALLBACK_DATA_NOADVANCE(header_value);
+  CROW_CALLBACK_DATA_NOADVANCE(url);
+  CROW_CALLBACK_DATA_NOADVANCE(body);
+
+  parser->nread = nread;
+  return len;
+
+error:
+  if (CROW_HTTP_PARSER_ERRNO(parser) == CHPE_OK) {
+    CROW_SET_ERRNO(CHPE_UNKNOWN);
+  }
+
+  parser->nread = nread;
+  return (p - data);
+}
+
+inline void
+  http_parser_init(http_parser* parser)
+{
+  void *data = parser->data; /* preserve application data */
+  memset(parser, 0, sizeof(*parser));
+  parser->data = data;
+  parser->state = s_start_req;
+  parser->http_errno = CHPE_OK;
+}
+
+/* Return a string name of the given error */
+inline const char *
+http_errno_name(enum http_errno err) {
+/* Map errno values to strings for human-readable output */
+#define CROW_HTTP_STRERROR_GEN(n, s) { "CHPE_" #n, s },
+static struct {
+  const char *name;
+  const char *description;
+} http_strerror_tab[] = {
+  CROW_HTTP_ERRNO_MAP(CROW_HTTP_STRERROR_GEN)
+};
+#undef CROW_HTTP_STRERROR_GEN
+  assert(((size_t) err) < CROW_ARRAY_SIZE(http_strerror_tab));
+  return http_strerror_tab[err].name;
+}
+
+/* Return a string description of the given error */
+inline const char *
+http_errno_description(enum http_errno err) {
+/* Map errno values to strings for human-readable output */
+#define CROW_HTTP_STRERROR_GEN(n, s) { "CHPE_" #n, s },
+static struct {
+  const char *name;
+  const char *description;
+} http_strerror_tab[] = {
+  CROW_HTTP_ERRNO_MAP(CROW_HTTP_STRERROR_GEN)
+};
+#undef CROW_HTTP_STRERROR_GEN
+  assert(((size_t) err) < CROW_ARRAY_SIZE(http_strerror_tab));
+  return http_strerror_tab[err].description;
+}
+
+/* Checks if this is the final chunk of the body. */
+inline int
+http_body_is_final(const struct http_parser *parser) {
+    return parser->state == s_message_done;
+}
+
+/* Change the maximum header size provided at compile time. */
+inline void
+http_parser_set_max_header_size(uint32_t size) {
+  max_header_size = size;
+}
+
+#undef CROW_HTTP_ERRNO_MAP
+#undef CROW_SET_ERRNO
+#undef CROW_CALLBACK_NOTIFY_
+#undef CROW_CALLBACK_NOTIFY
+#undef CROW_CALLBACK_NOTIFY_NOADVANCE
+#undef CROW_CALLBACK_DATA_
+#undef CROW_CALLBACK_DATA
+#undef CROW_CALLBACK_DATA_NOADVANCE
+#undef CROW_MARK
+#undef CROW_PROXY_CONNECTION
+#undef CROW_CONNECTION
+#undef CROW_CONTENT_LENGTH
+#undef CROW_TRANSFER_ENCODING
+#undef CROW_UPGRADE
+#undef CROW_CHUNKED
+#undef CROW_KEEP_ALIVE
+#undef CROW_CLOSE
+#undef CROW_PARSING_HEADER
+#undef CROW_LOWER
+#undef CROW_IS_ALPHA
+#undef CROW_IS_NUM
+#undef CROW_IS_ALPHANUM
+//#undef CROW_IS_HEX
+#undef CROW_IS_MARK
+#undef CROW_IS_USERINFO_CHAR
+#undef CROW_TOKEN
+#undef CROW_IS_URL_CHAR
+//#undef CROW_IS_HOST_CHAR
+#undef CROW_STRICT_CHECK
+
+}
+
+// clang-format on
+
+
+#include <string>
+#include <unordered_map>
+#include <algorithm>
+
+
+namespace crow
+{
+    /// A wrapper for `nodejs/http-parser`.
+
+    ///
+    /// Used to generate a \ref crow.request from the TCP socket buffer.
+    template<typename Handler>
+    struct HTTPParser : public http_parser
+    {
+        static int on_message_begin(http_parser*)
+        {
+            return 0;
+        }
+        static int on_method(http_parser* self_)
+        {
+            HTTPParser* self = static_cast<HTTPParser*>(self_);
+            self->req.method = static_cast<HTTPMethod>(self->method);
+
+            return 0;
+        }
+        static int on_url(http_parser* self_, const char* at, size_t length)
+        {
+            HTTPParser* self = static_cast<HTTPParser*>(self_);
+            self->req.raw_url.insert(self->req.raw_url.end(), at, at + length);
+            self->req.url_params = query_string(self->req.raw_url);
+            self->req.url = self->req.raw_url.substr(0, self->qs_point != 0 ? self->qs_point : std::string::npos);
+
+            self->process_url();
+
+            return 0;
+        }
+        static int on_header_field(http_parser* self_, const char* at, size_t length)
+        {
+            HTTPParser* self = static_cast<HTTPParser*>(self_);
+            switch (self->header_building_state)
+            {
+                case 0:
+                    if (!self->header_value.empty())
+                    {
+                        self->req.headers.emplace(std::move(self->header_field), std::move(self->header_value));
+                    }
+                    self->header_field.assign(at, at + length);
+                    self->header_building_state = 1;
+                    break;
+                case 1:
+                    self->header_field.insert(self->header_field.end(), at, at + length);
+                    break;
+            }
+            return 0;
+        }
+        static int on_header_value(http_parser* self_, const char* at, size_t length)
+        {
+            HTTPParser* self = static_cast<HTTPParser*>(self_);
+            switch (self->header_building_state)
+            {
+                case 0:
+                    self->header_value.insert(self->header_value.end(), at, at + length);
+                    break;
+                case 1:
+                    self->header_building_state = 0;
+                    self->header_value.assign(at, at + length);
+                    break;
+            }
+            return 0;
+        }
+        static int on_headers_complete(http_parser* self_)
+        {
+            HTTPParser* self = static_cast<HTTPParser*>(self_);
+            if (!self->header_field.empty())
+            {
+                self->req.headers.emplace(std::move(self->header_field), std::move(self->header_value));
+            }
+
+            self->set_connection_parameters();
+
+            self->process_header();
+            return 0;
+        }
+        static int on_body(http_parser* self_, const char* at, size_t length)
+        {
+            HTTPParser* self = static_cast<HTTPParser*>(self_);
+            self->req.body.insert(self->req.body.end(), at, at + length);
+            return 0;
+        }
+        static int on_message_complete(http_parser* self_)
+        {
+            HTTPParser* self = static_cast<HTTPParser*>(self_);
+
+            self->message_complete = true;
+            self->process_message();
+            return 0;
+        }
+        HTTPParser(Handler* handler):
+          http_parser(),
+          handler_(handler)
+        {
+            http_parser_init(this);
+        }
+
+        // return false on error
+        /// Parse a buffer into the different sections of an HTTP request.
+        bool feed(const char* buffer, int length)
+        {
+            if (message_complete)
+                return true;
+
+            const static http_parser_settings settings_{
+              on_message_begin,
+              on_method,
+              on_url,
+              on_header_field,
+              on_header_value,
+              on_headers_complete,
+              on_body,
+              on_message_complete,
+            };
+
+            int nparsed = http_parser_execute(this, &settings_, buffer, length);
+            if (http_errno != CHPE_OK)
+            {
+                return false;
+            }
+            return nparsed == length;
+        }
+
+        bool done()
+        {
+            return feed(nullptr, 0);
+        }
+
+        void clear()
+        {
+            req = crow::request();
+            header_field.clear();
+            header_value.clear();
+            header_building_state = 0;
+            qs_point = 0;
+            message_complete = false;
+            state = CROW_NEW_MESSAGE();
+        }
+
+        inline void process_url()
+        {
+            handler_->handle_url();
+        }
+
+        inline void process_header()
+        {
+            handler_->handle_header();
+        }
+
+        inline void process_message()
+        {
+            handler_->handle();
+        }
+
+        inline void set_connection_parameters()
+        {
+            req.http_ver_major = http_major;
+            req.http_ver_minor = http_minor;
+
+            //NOTE(EDev): it seems that the problem is with crow's policy on closing the connection for HTTP_VERSION < 1.0, the behaviour for that in crow is "don't close the connection, but don't send a keep-alive either"
+
+            // HTTP1.1 = always send keep_alive, HTTP1.0 = only send if header exists, HTTP?.? = never send
+            req.keep_alive = (http_major == 1 && http_minor == 0) ?
+                               ((flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
+                               ((http_major == 1 && http_minor == 1) ? true : false);
+
+            // HTTP1.1 = only close if close header exists, HTTP1.0 = always close unless keep_alive header exists, HTTP?.?= never close
+            req.close_connection = (http_major == 1 && http_minor == 0) ?
+                                     ((flags & F_CONNECTION_KEEP_ALIVE) ? false : true) :
+                                     ((http_major == 1 && http_minor == 1) ? ((flags & F_CONNECTION_CLOSE) ? true : false) : false);
+            req.upgrade = static_cast<bool>(upgrade);
+        }
+
+        /// The final request that this parser outputs.
+        ///
+        /// Data parsed is put directly into this object as soon as the related callback returns. (e.g. the request will have the cooorect method as soon as on_method() returns)
+        request req;
+
+    private:
+        int header_building_state = 0;
+        bool message_complete = false;
+        std::string header_field;
+        std::string header_value;
+
+        Handler* handler_; ///< This is currently an HTTP connection object (\ref crow.Connection).
+    };
+} // namespace crow
+
+#undef CROW_NEW_MESSAGE
+#undef CROW_start_state
+
+
+
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <iostream>
+#include <sstream>
+#include <string>
+
+namespace crow
+{
+    enum class LogLevel
+    {
+#ifndef ERROR
+#ifndef DEBUG
+        DEBUG = 0,
+        INFO,
+        WARNING,
+        ERROR,
+        CRITICAL,
+#endif
+#endif
+
+        Debug = 0,
+        Info,
+        Warning,
+        Error,
+        Critical,
+    };
+
+    class ILogHandler
+    {
+    public:
+        virtual ~ILogHandler() = default;
+
+        virtual void log(const std::string& message, LogLevel level) = 0;
+    };
+
+    class CerrLogHandler : public ILogHandler
+    {
+    public:
+        void log(const std::string &message, LogLevel level) override
+        {
+            std::string log_msg;
+            log_msg.reserve(message.length() + 1+32+3+8+2);
+            log_msg
+                .append("(")
+                .append(timestamp())
+                .append(") [");
+
+            switch (level)
+            {
+                case LogLevel::Debug:
+                    log_msg.append("DEBUG   ");
+                    break;
+                case LogLevel::Info:
+                    log_msg.append("INFO    ");
+                    break;
+                case LogLevel::Warning:
+                    log_msg.append("WARNING ");
+                    break;
+                case LogLevel::Error:
+                    log_msg.append("ERROR   ");
+                    break;
+                case LogLevel::Critical:
+                    log_msg.append("CRITICAL");
+                    break;
+            }
+
+            log_msg.append("] ")
+            .append(message);
+
+            std::cerr << log_msg << std::endl;
+        }
+
+    private:
+        static std::string timestamp()
+        {
+            char date[32];
+            time_t t = time(0);
+
+            tm my_tm;
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#ifdef CROW_USE_LOCALTIMEZONE
+            localtime_s(&my_tm, &t);
+#else
+            gmtime_s(&my_tm, &t);
+#endif
+#else
+#ifdef CROW_USE_LOCALTIMEZONE
+            localtime_r(&t, &my_tm);
+#else
+            gmtime_r(&t, &my_tm);
+#endif
+#endif
+
+            size_t sz = strftime(date, sizeof(date), "%Y-%m-%d %H:%M:%S", &my_tm);
+            return std::string(date, date + sz);
+        }
+    };
+
+    class logger
+    {
+    public:
+        logger(LogLevel level):
+          level_(level)
+        {}
+        ~logger()
+        {
+#ifdef CROW_ENABLE_LOGGING
+            if (level_ >= get_current_log_level())
+            {
+                get_handler_ref()->log(stringstream_.str(), level_);
+            }
+#endif
+        }
+
+        //
+        template<typename T>
+        logger& operator<<(T const& value)
+        {
+#ifdef CROW_ENABLE_LOGGING
+            if (level_ >= get_current_log_level())
+            {
+                stringstream_ << value;
+            }
+#endif
+            return *this;
+        }
+
+        //
+        static void setLogLevel(LogLevel level) { get_log_level_ref() = level; }
+
+        static void setHandler(ILogHandler* handler) { get_handler_ref() = handler; }
+
+        static LogLevel get_current_log_level() { return get_log_level_ref(); }
+
+    private:
+        //
+        static LogLevel& get_log_level_ref()
+        {
+            static LogLevel current_level = static_cast<LogLevel>(CROW_LOG_LEVEL);
+            return current_level;
+        }
+        static ILogHandler*& get_handler_ref()
+        {
+            static CerrLogHandler default_handler;
+            static ILogHandler* current_handler = &default_handler;
+            return current_handler;
+        }
+
+        //
+        std::ostringstream stringstream_;
+        LogLevel level_;
+    };
+} // namespace crow
+
+#define CROW_LOG_CRITICAL                                                  \
+    if (crow::logger::get_current_log_level() <= crow::LogLevel::Critical) \
+    crow::logger(crow::LogLevel::Critical)
+#define CROW_LOG_ERROR                                                  \
+    if (crow::logger::get_current_log_level() <= crow::LogLevel::Error) \
+    crow::logger(crow::LogLevel::Error)
+#define CROW_LOG_WARNING                                                  \
+    if (crow::logger::get_current_log_level() <= crow::LogLevel::Warning) \
+    crow::logger(crow::LogLevel::Warning)
+#define CROW_LOG_INFO                                                  \
+    if (crow::logger::get_current_log_level() <= crow::LogLevel::Info) \
+    crow::logger(crow::LogLevel::Info)
+#define CROW_LOG_DEBUG                                                  \
+    if (crow::logger::get_current_log_level() <= crow::LogLevel::Debug) \
+    crow::logger(crow::LogLevel::Debug)
 
 
 //#define CROW_JSON_NO_ERROR_CHECK
@@ -4583,4357 +7767,6 @@ namespace crow // NOTE: Already documented in "crow/app.h"
     } // namespace json
 } // namespace crow
 
-
-#include <string_view>
-#include <locale>
-#include <unordered_map>
-
-
-namespace crow
-{
-    /// Hashing function for ci_map (unordered_multimap).
-    struct ci_hash
-    {
-        size_t operator()(const std::string_view key) const
-        {
-            std::size_t seed = 0;
-            std::locale locale;
-
-            for (auto c : key)
-                hash_combine(seed, std::toupper(c, locale));
-
-            return seed;
-        }
-
-    private:
-        static inline void hash_combine(std::size_t& seed, char v)
-        {
-            std::hash<char> hasher;
-            seed ^= hasher(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-    };
-
-    /// Equals function for ci_map (unordered_multimap).
-    struct ci_key_eq
-    {
-        bool operator()(const std::string_view l, const std::string_view r) const
-        {
-            return utility::string_equals(l, r);
-        }
-    };
-
-    using ci_map = std::unordered_multimap<std::string, std::string, ci_hash, ci_key_eq>;
-} // namespace crow
-
-
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <iostream>
-
-namespace crow
-{
-    const char cr = '\r';
-    const char lf = '\n';
-    const std::string crlf("\r\n");
-
-    enum class HTTPMethod : char
-    {
-#ifndef DELETE
-        DELETE = 0,
-        GET,
-        HEAD,
-        POST,
-        PUT,
-
-        CONNECT,
-        OPTIONS,
-        TRACE,
-
-        PATCH,
-        PURGE,
-
-        COPY,
-        LOCK,
-        MKCOL,
-        MOVE,
-        PROPFIND,
-        PROPPATCH,
-        SEARCH,
-        UNLOCK,
-        BIND,
-        REBIND,
-        UNBIND,
-        ACL,
-
-        REPORT,
-        MKACTIVITY,
-        CHECKOUT,
-        MERGE,
-
-        MSEARCH,
-        NOTIFY,
-        SUBSCRIBE,
-        UNSUBSCRIBE,
-
-        MKCALENDAR,
-
-        LINK,
-        UNLINK,
-
-        SOURCE,
-#endif
-
-        Delete = 0,
-        Get,
-        Head,
-        Post,
-        Put,
-
-        Connect,
-        Options,
-        Trace,
-
-        Patch,
-        Purge,
-
-        Copy,
-        Lock,
-        MkCol,
-        Move,
-        Propfind,
-        Proppatch,
-        Search,
-        Unlock,
-        Bind,
-        Rebind,
-        Unbind,
-        Acl,
-
-        Report,
-        MkActivity,
-        Checkout,
-        Merge,
-
-        MSearch,
-        Notify,
-        Subscribe,
-        Unsubscribe,
-
-        MkCalendar,
-
-        Link,
-        Unlink,
-
-        Source,
-
-
-        InternalMethodCount,
-        // should not add an item below this line: used for array count
-    };
-
-    constexpr const char* method_strings[] =
-      {
-        "DELETE",
-        "GET",
-        "HEAD",
-        "POST",
-        "PUT",
-
-        "CONNECT",
-        "OPTIONS",
-        "TRACE",
-
-        "PATCH",
-        "PURGE",
-
-        "COPY",
-        "LOCK",
-        "MKCOL",
-        "MOVE",
-        "PROPFIND",
-        "PROPPATCH",
-        "SEARCH",
-        "UNLOCK",
-        "BIND",
-        "REBIND",
-        "UNBIND",
-        "ACL",
-
-        "REPORT",
-        "MKACTIVITY",
-        "CHECKOUT",
-        "MERGE",
-
-        "M-SEARCH",
-        "NOTIFY",
-        "SUBSCRIBE",
-        "UNSUBSCRIBE",
-
-        "MKCALENDAR",
-
-        "LINK",
-        "UNLINK",
-
-        "SOURCE"};
-
-
-    inline std::string method_name(HTTPMethod method)
-    {
-        if (CROW_LIKELY(method < HTTPMethod::InternalMethodCount))
-        {
-            return method_strings[static_cast<unsigned int>(method)];
-        }
-        return "invalid";
-    }
-
-    // clang-format off
-
-    enum status
-    {
-        CONTINUE                      = 100,
-        SWITCHING_PROTOCOLS           = 101,
-
-        OK                            = 200,
-        CREATED                       = 201,
-        ACCEPTED                      = 202,
-        NON_AUTHORITATIVE_INFORMATION = 203,
-        NO_CONTENT                    = 204,
-        RESET_CONTENT                 = 205,
-        PARTIAL_CONTENT               = 206,
-
-        MULTIPLE_CHOICES              = 300,
-        MOVED_PERMANENTLY             = 301,
-        FOUND                         = 302,
-        SEE_OTHER                     = 303,
-        NOT_MODIFIED                  = 304,
-        TEMPORARY_REDIRECT            = 307,
-        PERMANENT_REDIRECT            = 308,
-
-        BAD_REQUEST                   = 400,
-        UNAUTHORIZED                  = 401,
-        FORBIDDEN                     = 403,
-        NOT_FOUND                     = 404,
-        METHOD_NOT_ALLOWED            = 405,
-        NOT_ACCEPTABLE                = 406,
-        PROXY_AUTHENTICATION_REQUIRED = 407,
-        CONFLICT                      = 409,
-        GONE                          = 410,
-        PAYLOAD_TOO_LARGE             = 413,
-        UNSUPPORTED_MEDIA_TYPE        = 415,
-        RANGE_NOT_SATISFIABLE         = 416,
-        EXPECTATION_FAILED            = 417,
-        PRECONDITION_REQUIRED         = 428,
-        TOO_MANY_REQUESTS             = 429,
-        UNAVAILABLE_FOR_LEGAL_REASONS = 451,
-
-        INTERNAL_SERVER_ERROR         = 500,
-        NOT_IMPLEMENTED               = 501,
-        BAD_GATEWAY                   = 502,
-        SERVICE_UNAVAILABLE           = 503,
-        GATEWAY_TIMEOUT               = 504,
-        VARIANT_ALSO_NEGOTIATES       = 506
-    };
-
-    // clang-format on
-
-    enum class ParamType : char
-    {
-        INT,
-        UINT,
-        DOUBLE,
-        STRING,
-        PATH,
-
-        MAX
-    };
-
-    /// @cond SKIP
-    struct routing_params
-    {
-        std::vector<int64_t> int_params;
-        std::vector<uint64_t> uint_params;
-        std::vector<double> double_params;
-        std::vector<std::string> string_params;
-
-        void debug_print() const
-        {
-            std::cerr << "routing_params" << std::endl;
-            for (auto i : int_params)
-                std::cerr << i << ", ";
-            std::cerr << std::endl;
-            for (auto i : uint_params)
-                std::cerr << i << ", ";
-            std::cerr << std::endl;
-            for (auto i : double_params)
-                std::cerr << i << ", ";
-            std::cerr << std::endl;
-            for (auto& i : string_params)
-                std::cerr << i << ", ";
-            std::cerr << std::endl;
-        }
-
-        template<typename T>
-        T get(unsigned) const;
-    };
-
-    template<>
-    inline int64_t routing_params::get<int64_t>(unsigned index) const
-    {
-        return int_params[index];
-    }
-
-    template<>
-    inline uint64_t routing_params::get<uint64_t>(unsigned index) const
-    {
-        return uint_params[index];
-    }
-
-    template<>
-    inline double routing_params::get<double>(unsigned index) const
-    {
-        return double_params[index];
-    }
-
-    template<>
-    inline std::string routing_params::get<std::string>(unsigned index) const
-    {
-        return string_params[index];
-    }
-    /// @endcond
-
-    struct routing_handle_result
-    {
-        bool catch_all{false};
-        uint16_t rule_index;
-        std::vector<uint16_t> blueprint_indices;
-        routing_params r_params;
-        HTTPMethod method;
-
-        routing_handle_result() {}
-
-        routing_handle_result(uint16_t rule_index_, std::vector<uint16_t> blueprint_indices_, routing_params r_params_):
-          rule_index(rule_index_),
-          blueprint_indices(blueprint_indices_),
-          r_params(r_params_) {}
-
-        routing_handle_result(uint16_t rule_index_, std::vector<uint16_t> blueprint_indices_, routing_params r_params_, HTTPMethod method_):
-          rule_index(rule_index_),
-          blueprint_indices(blueprint_indices_),
-          r_params(r_params_),
-          method(method_) {}
-    };
-} // namespace crow
-
-// clang-format off
-#ifndef CROW_MSVC_WORKAROUND
-constexpr crow::HTTPMethod method_from_string(const char* str)
-{
-    return crow::black_magic::is_equ_p(str, "GET", 3)    ? crow::HTTPMethod::Get :
-           crow::black_magic::is_equ_p(str, "DELETE", 6) ? crow::HTTPMethod::Delete :
-           crow::black_magic::is_equ_p(str, "HEAD", 4)   ? crow::HTTPMethod::Head :
-           crow::black_magic::is_equ_p(str, "POST", 4)   ? crow::HTTPMethod::Post :
-           crow::black_magic::is_equ_p(str, "PUT", 3)    ? crow::HTTPMethod::Put :
-
-           crow::black_magic::is_equ_p(str, "OPTIONS", 7) ? crow::HTTPMethod::Options :
-           crow::black_magic::is_equ_p(str, "CONNECT", 7) ? crow::HTTPMethod::Connect :
-           crow::black_magic::is_equ_p(str, "TRACE", 5)   ? crow::HTTPMethod::Trace :
-
-           crow::black_magic::is_equ_p(str, "PATCH", 5)     ? crow::HTTPMethod::Patch :
-           crow::black_magic::is_equ_p(str, "PURGE", 5)     ? crow::HTTPMethod::Purge :
-           crow::black_magic::is_equ_p(str, "COPY", 4)      ? crow::HTTPMethod::Copy :
-           crow::black_magic::is_equ_p(str, "LOCK", 4)      ? crow::HTTPMethod::Lock :
-           crow::black_magic::is_equ_p(str, "MKCOL", 5)     ? crow::HTTPMethod::MkCol :
-           crow::black_magic::is_equ_p(str, "MOVE", 4)      ? crow::HTTPMethod::Move :
-           crow::black_magic::is_equ_p(str, "PROPFIND", 8)  ? crow::HTTPMethod::Propfind :
-           crow::black_magic::is_equ_p(str, "PROPPATCH", 9) ? crow::HTTPMethod::Proppatch :
-           crow::black_magic::is_equ_p(str, "SEARCH", 6)    ? crow::HTTPMethod::Search :
-           crow::black_magic::is_equ_p(str, "UNLOCK", 6)    ? crow::HTTPMethod::Unlock :
-           crow::black_magic::is_equ_p(str, "BIND", 4)      ? crow::HTTPMethod::Bind :
-           crow::black_magic::is_equ_p(str, "REBIND", 6)    ? crow::HTTPMethod::Rebind :
-           crow::black_magic::is_equ_p(str, "UNBIND", 6)    ? crow::HTTPMethod::Unbind :
-           crow::black_magic::is_equ_p(str, "ACL", 3)       ? crow::HTTPMethod::Acl :
-
-           crow::black_magic::is_equ_p(str, "REPORT", 6)      ? crow::HTTPMethod::Report :
-           crow::black_magic::is_equ_p(str, "MKACTIVITY", 10) ? crow::HTTPMethod::MkActivity :
-           crow::black_magic::is_equ_p(str, "CHECKOUT", 8)    ? crow::HTTPMethod::Checkout :
-           crow::black_magic::is_equ_p(str, "MERGE", 5)       ? crow::HTTPMethod::Merge :
-
-           crow::black_magic::is_equ_p(str, "MSEARCH", 7)      ? crow::HTTPMethod::MSearch :
-           crow::black_magic::is_equ_p(str, "NOTIFY", 6)       ? crow::HTTPMethod::Notify :
-           crow::black_magic::is_equ_p(str, "SUBSCRIBE", 9)    ? crow::HTTPMethod::Subscribe :
-           crow::black_magic::is_equ_p(str, "UNSUBSCRIBE", 11) ? crow::HTTPMethod::Unsubscribe :
-
-           crow::black_magic::is_equ_p(str, "MKCALENDAR", 10) ? crow::HTTPMethod::MkCalendar :
-
-           crow::black_magic::is_equ_p(str, "LINK", 4)   ? crow::HTTPMethod::Link :
-           crow::black_magic::is_equ_p(str, "UNLINK", 6) ? crow::HTTPMethod::Unlink :
-
-           crow::black_magic::is_equ_p(str, "SOURCE", 6) ? crow::HTTPMethod::Source :
-                                                           throw std::runtime_error("invalid http method");
-}
-
-constexpr crow::HTTPMethod operator""_method(const char* str, size_t /*len*/)
-{
-    return method_from_string( str );
-}
-#endif
-// clang-format on
-
-/* merged revision: 5b951d74bd66ec9d38448e0a85b1cf8b85d97db3 */
-/* updated to     : e13b274770da9b82a1085dec29182acfea72e7a7 (beyond v2.9.5) */
-/* commits not included:
- * 091ebb87783a58b249062540bbea07de2a11e9cf
- * 6132d1fefa03f769a3979355d1f5da0b8889cad2
- * 7ba312397c2a6c851a4b5efe6c1603b1e1bda6ff
- * d7675453a6c03180572f084e95eea0d02df39164
- * dff604db203986e532e5a679bafd0e7382c6bdd9 (Might be useful to actually add [upgrade requests with a body])
- * e01811e7f4894d7f0f7f4bd8492cccec6f6b4038 (related to above)
- * 05525c5fde1fc562481f6ae08fa7056185325daf (also related to above)
- * 350258965909f249f9c59823aac240313e0d0120 (cannot be implemented due to upgrade)
- */
-
-// clang-format off
-extern "C" {
-#include <stddef.h>
-#if defined(_WIN32) && !defined(__MINGW32__) && \
-  (!defined(_MSC_VER) || _MSC_VER<1600) && !defined(__WINE__)
-#include <BaseTsd.h>
-typedef __int8 int8_t;
-typedef unsigned __int8 uint8_t;
-typedef __int16 int16_t;
-typedef unsigned __int16 uint16_t;
-typedef __int32 int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64 int64_t;
-typedef unsigned __int64 uint64_t;
-#elif (defined(__sun) || defined(__sun__)) && defined(__SunOS_5_9)
-#include <sys/inttypes.h>
-#else
-#include <stdint.h>
-#endif
-#include <assert.h>
-#include <ctype.h>
-#include <string.h>
-#include <limits.h>
-}
-
-namespace crow
-{
-/* Maximium header size allowed. If the macro is not defined
- * before including this header then the default is used. To
- * change the maximum header size, define the macro in the build
- * environment (e.g. -DHTTP_MAX_HEADER_SIZE=<value>). To remove
- * the effective limit on the size of the header, define the macro
- * to a very large number (e.g. -DCROW_HTTP_MAX_HEADER_SIZE=0x7fffffff)
- */
-#ifndef CROW_HTTP_MAX_HEADER_SIZE
-# define CROW_HTTP_MAX_HEADER_SIZE (80*1024)
-#endif
-
-typedef struct http_parser http_parser;
-typedef struct http_parser_settings http_parser_settings;
-
-/* Callbacks should return non-zero to indicate an error. The parser will
- * then halt execution.
- *
- * The one exception is on_headers_complete. In a HTTP_RESPONSE parser
- * returning '1' from on_headers_complete will tell the parser that it
- * should not expect a body. This is used when receiving a response to a
- * HEAD request which may contain 'Content-Length' or 'Transfer-Encoding:
- * chunked' headers that indicate the presence of a body.
- *
- * Returning `2` from on_headers_complete will tell parser that it should not
- * expect neither a body nor any futher responses on this connection. This is
- * useful for handling responses to a CONNECT request which may not contain
- * `Upgrade` or `Connection: upgrade` headers.
- *
- * http_data_cb does not return data chunks. It will be called arbitrarally
- * many times for each string. E.G. you might get 10 callbacks for "on_url"
- * each providing just a few characters more data.
- */
-typedef int (*http_data_cb) (http_parser*, const char *at, size_t length);
-typedef int (*http_cb) (http_parser*);
-
-
-/* Flag values for http_parser.flags field */
-enum http_connection_flags // This is basically 7 booleans placed into 1 integer. Uses 4 bytes instead of n bytes (7 currently).
-  { F_CHUNKED               = 1 << 0 // 00000000 00000000 00000000 00000001
-  , F_CONNECTION_KEEP_ALIVE = 1 << 1 // 00000000 00000000 00000000 00000010
-  , F_CONNECTION_CLOSE      = 1 << 2 // 00000000 00000000 00000000 00000100
-  , F_TRAILING              = 1 << 3 // 00000000 00000000 00000000 00001000
-  , F_UPGRADE               = 1 << 4 // 00000000 00000000 00000000 00010000
-  , F_SKIPBODY              = 1 << 5 // 00000000 00000000 00000000 00100000
-  , F_CONTENTLENGTH         = 1 << 6 // 00000000 00000000 00000000 01000000
-  };
-
-
-/* Map for errno-related constants
- *
- * The provided argument should be a macro that takes 2 arguments.
- */
-#define CROW_HTTP_ERRNO_MAP(CROW_XX)                                                    \
-  /* No error */                                                                        \
-  CROW_XX(OK, "success")                                                                \
-                                                                                        \
-  /* Callback-related errors */                                                         \
-  CROW_XX(CB_message_begin, "the on_message_begin callback failed")                     \
-  CROW_XX(CB_method, "the on_method callback failed")                                   \
-  CROW_XX(CB_url, "the \"on_url\" callback failed")                                     \
-  CROW_XX(CB_header_field, "the \"on_header_field\" callback failed")                   \
-  CROW_XX(CB_header_value, "the \"on_header_value\" callback failed")                   \
-  CROW_XX(CB_headers_complete, "the \"on_headers_complete\" callback failed")           \
-  CROW_XX(CB_body, "the \"on_body\" callback failed")                                   \
-  CROW_XX(CB_message_complete, "the \"on_message_complete\" callback failed")           \
-  CROW_XX(CB_status, "the \"on_status\" callback failed")                               \
-                                                                                        \
-  /* Parsing-related errors */                                                          \
-  CROW_XX(INVALID_EOF_STATE, "stream ended at an unexpected time")                      \
-  CROW_XX(HEADER_OVERFLOW, "too many header bytes seen; overflow detected")             \
-  CROW_XX(CLOSED_CONNECTION, "data received after completed connection: close message") \
-  CROW_XX(INVALID_VERSION, "invalid HTTP version")                                      \
-  CROW_XX(INVALID_STATUS, "invalid HTTP status code")                                   \
-  CROW_XX(INVALID_METHOD, "invalid HTTP method")                                        \
-  CROW_XX(INVALID_URL, "invalid URL")                                                   \
-  CROW_XX(INVALID_HOST, "invalid host")                                                 \
-  CROW_XX(INVALID_PORT, "invalid port")                                                 \
-  CROW_XX(INVALID_PATH, "invalid path")                                                 \
-  CROW_XX(INVALID_QUERY_STRING, "invalid query string")                                 \
-  CROW_XX(INVALID_FRAGMENT, "invalid fragment")                                         \
-  CROW_XX(LF_EXPECTED, "LF character expected")                                         \
-  CROW_XX(INVALID_HEADER_TOKEN, "invalid character in header")                          \
-  CROW_XX(INVALID_CONTENT_LENGTH, "invalid character in content-length header")         \
-  CROW_XX(UNEXPECTED_CONTENT_LENGTH, "unexpected content-length header")                \
-  CROW_XX(INVALID_CHUNK_SIZE, "invalid character in chunk size header")                 \
-  CROW_XX(INVALID_CONSTANT, "invalid constant string")                                  \
-  CROW_XX(INVALID_INTERNAL_STATE, "encountered unexpected internal state")              \
-  CROW_XX(STRICT, "strict mode assertion failed")                                       \
-  CROW_XX(UNKNOWN, "an unknown error occurred")                                         \
-  CROW_XX(INVALID_TRANSFER_ENCODING, "request has invalid transfer-encoding")           \
-
-
-/* Define CHPE_* values for each errno value above */
-#define CROW_HTTP_ERRNO_GEN(n, s) CHPE_##n,
-enum http_errno {
-  CROW_HTTP_ERRNO_MAP(CROW_HTTP_ERRNO_GEN)
-};
-#undef CROW_HTTP_ERRNO_GEN
-
-
-/* Get an http_errno value from an http_parser */
-#define CROW_HTTP_PARSER_ERRNO(p) ((enum http_errno)(p)->http_errno)
-
-
-    struct http_parser
-    {
-        /** PRIVATE **/
-        unsigned int flags : 7;                  /* F_* values from 'flags' enum; semi-public */
-        unsigned int state : 8;                  /* enum state from http_parser.c */
-        unsigned int header_state : 7;           /* enum header_state from http_parser.c */
-        unsigned int index : 5;                  /* index into current matcher */
-        unsigned int uses_transfer_encoding : 1; /* Transfer-Encoding header is present */
-        unsigned int allow_chunked_length : 1;   /* Allow headers with both `Content-Length` and `Transfer-Encoding: chunked` set */
-        unsigned int lenient_http_headers : 1;
-
-        uint32_t nread;          /* # bytes read in various scenarios */
-        uint64_t content_length; /* # bytes in body. `(uint64_t) -1` (all bits one) if no Content-Length header. */
-        unsigned long qs_point;
-
-        /** READ-ONLY **/
-        unsigned char http_major;
-        unsigned char http_minor;
-        unsigned int method : 8;       /* requests only */
-        unsigned int http_errno : 7;
-
-  /* 1 = Upgrade header was present and the parser has exited because of that.
-   * 0 = No upgrade header present.
-   * Should be checked when http_parser_execute() returns in addition to
-   * error checking.
-   */
-        unsigned int upgrade : 1;
-
-        /** PUBLIC **/
-        void* data; /* A pointer to get hook to the "connection" or "socket" object */
-    };
-
-
-    struct http_parser_settings
-    {
-        http_cb on_message_begin;
-        http_cb on_method;
-        http_data_cb on_url;
-        http_data_cb on_header_field;
-        http_data_cb on_header_value;
-        http_cb on_headers_complete;
-        http_data_cb on_body;
-        http_cb on_message_complete;
-    };
-
-
-
-// SOURCE (.c) CODE
-static uint32_t max_header_size = CROW_HTTP_MAX_HEADER_SIZE;
-
-#ifndef CROW_ULLONG_MAX
-# define CROW_ULLONG_MAX ((uint64_t) -1) /* 2^64-1 */
-#endif
-
-#ifndef CROW_MIN
-# define CROW_MIN(a,b) ((a) < (b) ? (a) : (b))
-#endif
-
-#ifndef CROW_ARRAY_SIZE
-# define CROW_ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
-#endif
-
-#ifndef CROW_BIT_AT
-# define CROW_BIT_AT(a, i)                                           \
-  (!!((unsigned int) (a)[(unsigned int) (i) >> 3] &                  \
-   (1 << ((unsigned int) (i) & 7))))
-#endif
-
-#define CROW_SET_ERRNO(e)                                            \
-do {                                                                 \
-  parser->nread = nread;                                             \
-  parser->http_errno = (e);                                          \
-} while(0)
-
-/* Run the notify callback FOR, returning ER if it fails */
-#define CROW_CALLBACK_NOTIFY_(FOR, ER)                               \
-do {                                                                 \
-  assert(CROW_HTTP_PARSER_ERRNO(parser) == CHPE_OK);                 \
-                                                                     \
-  if (CROW_LIKELY(settings->on_##FOR)) {                             \
-    if (CROW_UNLIKELY(0 != settings->on_##FOR(parser))) {            \
-      CROW_SET_ERRNO(CHPE_CB_##FOR);                                 \
-    }                                                                \
-                                                                     \
-    /* We either errored above or got paused; get out */             \
-    if (CROW_UNLIKELY(CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK)) {  \
-      return (ER);                                                   \
-    }                                                                \
-  }                                                                  \
-} while (0)
-
-/* Run the notify callback FOR and consume the current byte */
-#define CROW_CALLBACK_NOTIFY(FOR)            CROW_CALLBACK_NOTIFY_(FOR, p - data + 1)
-
-/* Run the notify callback FOR and don't consume the current byte */
-#define CROW_CALLBACK_NOTIFY_NOADVANCE(FOR)  CROW_CALLBACK_NOTIFY_(FOR, p - data)
-
-/* Run data callback FOR with LEN bytes, returning ER if it fails */
-#define CROW_CALLBACK_DATA_(FOR, LEN, ER)                            \
-do {                                                                 \
-  assert(CROW_HTTP_PARSER_ERRNO(parser) == CHPE_OK);                 \
-                                                                     \
-  if (FOR##_mark) {                                                  \
-    if (CROW_LIKELY(settings->on_##FOR)) {                           \
-      if (CROW_UNLIKELY(0 !=                                         \
-          settings->on_##FOR(parser, FOR##_mark, (LEN)))) {          \
-        CROW_SET_ERRNO(CHPE_CB_##FOR);                               \
-      }                                                              \
-                                                                     \
-      /* We either errored above or got paused; get out */           \
-      if (CROW_UNLIKELY(CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK)) {\
-        return (ER);                                                 \
-      }                                                              \
-    }                                                                \
-    FOR##_mark = NULL;                                               \
-  }                                                                  \
-} while (0)
-
-/* Run the data callback FOR and consume the current byte */
-#define CROW_CALLBACK_DATA(FOR)                                      \
-    CROW_CALLBACK_DATA_(FOR, p - FOR##_mark, p - data + 1)
-
-/* Run the data callback FOR and don't consume the current byte */
-#define CROW_CALLBACK_DATA_NOADVANCE(FOR)                            \
-    CROW_CALLBACK_DATA_(FOR, p - FOR##_mark, p - data)
-
-/* Set the mark FOR; non-destructive if mark is already set */
-#define CROW_MARK(FOR)                                               \
-do {                                                                 \
-  if (!FOR##_mark) {                                                 \
-    FOR##_mark = p;                                                  \
-  }                                                                  \
-} while (0)
-
-/* Don't allow the total size of the HTTP headers (including the status
- * line) to exceed max_header_size.  This check is here to protect
- * embedders against denial-of-service attacks where the attacker feeds
- * us a never-ending header that the embedder keeps buffering.
- *
- * This check is arguably the responsibility of embedders but we're doing
- * it on the embedder's behalf because most won't bother and this way we
- * make the web a little safer.  max_header_size is still far bigger
- * than any reasonable request or response so this should never affect
- * day-to-day operation.
- */
-#define CROW_COUNT_HEADER_SIZE(V)                                    \
-do {                                                                 \
-  nread += (uint32_t)(V);                                            \
-  if (CROW_UNLIKELY(nread > max_header_size)) {                      \
-    CROW_SET_ERRNO(CHPE_HEADER_OVERFLOW);                            \
-    goto error;                                                      \
-  }                                                                  \
-} while (0)
-#define CROW_REEXECUTE()                                             \
-  goto reexecute;                                                    \
-
-#define CROW_PROXY_CONNECTION "proxy-connection"
-#define CROW_CONNECTION "connection"
-#define CROW_CONTENT_LENGTH "content-length"
-#define CROW_TRANSFER_ENCODING "transfer-encoding"
-#define CROW_UPGRADE "upgrade"
-#define CROW_CHUNKED "chunked"
-#define CROW_KEEP_ALIVE "keep-alive"
-#define CROW_CLOSE "close"
-
-
-
-    enum state
-    {
-        s_dead = 1 /* important that this is > 0 */
-
-        ,
-        s_start_req
-
-        ,
-        s_req_method,
-        s_req_spaces_before_url,
-        s_req_schema,
-        s_req_schema_slash,
-        s_req_schema_slash_slash,
-        s_req_server_start,
-        s_req_server,             // }
-        s_req_server_with_at,     // |
-        s_req_path,               // | The parser recognizes how to switch between these states,
-        s_req_query_string_start, // | however it doesn't process them any differently.
-        s_req_query_string,       // }
-        s_req_http_start,
-        s_req_http_H,
-        s_req_http_HT,
-        s_req_http_HTT,
-        s_req_http_HTTP,
-        s_req_http_I,
-        s_req_http_IC,
-        s_req_http_major,
-        s_req_http_dot,
-        s_req_http_minor,
-        s_req_http_end,
-        s_req_line_almost_done
-
-        ,
-        s_header_field_start,
-        s_header_field,
-        s_header_value_discard_ws,
-        s_header_value_discard_ws_almost_done,
-        s_header_value_discard_lws,
-        s_header_value_start,
-        s_header_value,
-        s_header_value_lws
-
-        ,
-        s_header_almost_done
-
-        ,
-        s_chunk_size_start,
-        s_chunk_size,
-        s_chunk_parameters,
-        s_chunk_size_almost_done
-
-        ,
-        s_headers_almost_done,
-        s_headers_done
-
-        /* Important: 's_headers_done' must be the last 'header' state. All
-         * states beyond this must be 'body' states. It is used for overflow
-         * checking. See the CROW_PARSING_HEADER() macro.
-         */
-
-        ,
-        s_chunk_data,
-        s_chunk_data_almost_done,
-        s_chunk_data_done
-
-        ,
-        s_body_identity,
-        s_body_identity_eof
-
-        ,
-        s_message_done
-    };
-
-
-#define CROW_PARSING_HEADER(state) (state <= s_headers_done)
-
-
-enum header_states
-  { h_general = 0
-  , h_C
-  , h_CO
-  , h_CON
-
-  , h_matching_connection
-  , h_matching_proxy_connection
-  , h_matching_content_length
-  , h_matching_transfer_encoding
-  , h_matching_upgrade
-
-  , h_connection
-  , h_content_length
-  , h_content_length_num
-  , h_content_length_ws
-  , h_transfer_encoding
-  , h_upgrade
-
-  , h_matching_transfer_encoding_token_start
-  , h_matching_transfer_encoding_chunked
-  , h_matching_transfer_encoding_token
-
-  , h_matching_connection_keep_alive
-  , h_matching_connection_close
-
-  , h_transfer_encoding_chunked
-  , h_connection_keep_alive
-  , h_connection_close
-  };
-
-enum http_host_state
-  {
-    s_http_host_dead = 1
-  , s_http_userinfo_start
-  , s_http_userinfo
-  , s_http_host_start
-  , s_http_host_v6_start
-  , s_http_host
-  , s_http_host_v6
-  , s_http_host_v6_end
-  , s_http_host_v6_zone_start
-  , s_http_host_v6_zone
-  , s_http_host_port_start
-  , s_http_host_port
-};
-
-/* Macros for character classes; depends on strict-mode  */
-#define CROW_LOWER(c)            (unsigned char)(c | 0x20)
-#define CROW_IS_ALPHA(c)         (CROW_LOWER(c) >= 'a' && CROW_LOWER(c) <= 'z')
-#define CROW_IS_NUM(c)           ((c) >= '0' && (c) <= '9')
-#define CROW_IS_ALPHANUM(c)      (CROW_IS_ALPHA(c) || CROW_IS_NUM(c))
-//#define CROW_IS_HEX(c)           (CROW_IS_NUM(c) || (CROW_LOWER(c) >= 'a' && CROW_LOWER(c) <= 'f'))
-#define CROW_IS_MARK(c)          ((c) == '-' || (c) == '_' || (c) == '.' || \
-  (c) == '!' || (c) == '~' || (c) == '*' || (c) == '\'' || (c) == '(' ||    \
-  (c) == ')')
-#define CROW_IS_USERINFO_CHAR(c) (CROW_IS_ALPHANUM(c) || CROW_IS_MARK(c) || (c) == '%' || \
-  (c) == ';' || (c) == ':' || (c) == '&' || (c) == '=' || (c) == '+' ||                   \
-  (c) == '$' || (c) == ',')
-
-#define CROW_TOKEN(c)            (tokens[(unsigned char)c])
-#define CROW_IS_URL_CHAR(c)      (CROW_BIT_AT(normal_url_char, (unsigned char)c))
-//#define CROW_IS_HOST_CHAR(c)     (CROW_IS_ALPHANUM(c) || (c) == '.' || (c) == '-')
-
-  /**
- * Verify that a char is a valid visible (printable) US-ASCII
- * character or %x80-FF
- **/
-#define CROW_IS_HEADER_CHAR(ch)                                                     \
-  (ch == cr || ch == lf || ch == 9 || ((unsigned char)ch > 31 && ch != 127))
-
-#define CROW_start_state s_start_req
-
-# define CROW_STRICT_CHECK(cond)                                     \
-do {                                                                 \
-  if (cond) {                                                        \
-    CROW_SET_ERRNO(CHPE_STRICT);                                     \
-    goto error;                                                      \
-  }                                                                  \
-} while (0)
-#define CROW_NEW_MESSAGE() (CROW_start_state)
-
-/* Our URL parser.
- *
- * This is designed to be shared by http_parser_execute() for URL validation,
- * hence it has a state transition + byte-for-byte interface. In addition, it
- * is meant to be embedded in http_parser_parse_url(), which does the dirty
- * work of turning state transitions URL components for its API.
- *
- * This function should only be invoked with non-space characters. It is
- * assumed that the caller cares about (and can detect) the transition between
- * URL and non-URL states by looking for these.
- */
-inline enum state
-parse_url_char(enum state s, const char ch, http_parser *parser, const char* url_mark, const char* p)
-{
-# define CROW_T(v) 0
-
-
-static const uint8_t normal_url_char[32] = {
-/*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
-        0    |   0    |   0    |   0    |   0    |   0    |   0    |   0,
-/*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
-        0    |CROW_T(2)|  0    |   0    |CROW_T(16)| 0    |   0    |   0,
-/*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
-        0    |   0    |   0    |   0    |   0    |   0    |   0    |   0,
-/*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
-        0    |   0    |   0    |   0    |   0    |   0    |   0    |   0,
-/*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
-        0    |   2    |   4    |   0    |   16   |   32   |   64   |  128,
-/*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |   0,
-/*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/*  80  P    81  Q    82  R    83  S    84  CROW_T    85  U    86  V    87  W  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |  128,
-/* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
-        1    |   2    |   4    |   8    |   16   |   32   |   64   |   0, };
-
-#undef CROW_T
-
-  if (ch == ' ' || ch == '\r' || ch == '\n') {
-    return s_dead;
-  }
-  if (ch == '\t' || ch == '\f') {
-    return s_dead;
-  }
-
-  switch (s) {
-    case s_req_spaces_before_url:
-      /* Proxied requests are followed by scheme of an absolute URI (alpha).
-       * All methods except CONNECT are followed by '/' or '*'.
-       */
-
-      if (ch == '/' || ch == '*') {
-        return s_req_path;
-      }
-
-      if (CROW_IS_ALPHA(ch)) {
-        return s_req_schema;
-      }
-
-      break;
-
-    case s_req_schema:
-      if (CROW_IS_ALPHA(ch)) {
-        return s;
-      }
-
-      if (ch == ':') {
-        return s_req_schema_slash;
-      }
-
-      break;
-
-    case s_req_schema_slash:
-      if (ch == '/') {
-        return s_req_schema_slash_slash;
-      }
-
-      break;
-
-    case s_req_schema_slash_slash:
-      if (ch == '/') {
-        return s_req_server_start;
-      }
-
-      break;
-
-    case s_req_server_with_at:
-      if (ch == '@') {
-        return s_dead;
-      }
-
-    /* fall through */
-    case s_req_server_start:
-    case s_req_server:
-      if (ch == '/') {
-        return s_req_path;
-      }
-
-      if (ch == '?') {
-          parser->qs_point = p - url_mark;
-        return s_req_query_string_start;
-      }
-
-      if (ch == '@') {
-        return s_req_server_with_at;
-      }
-
-      if (CROW_IS_USERINFO_CHAR(ch) || ch == '[' || ch == ']') {
-        return s_req_server;
-      }
-
-      break;
-
-    case s_req_path:
-      if (CROW_IS_URL_CHAR(ch)) {
-        return s;
-      }
-      else if (ch == '?')
-      {
-          parser->qs_point = p - url_mark;
-          return s_req_query_string_start;
-      }
-
-      break;
-
-    case s_req_query_string_start:
-    case s_req_query_string:
-      if (CROW_IS_URL_CHAR(ch)) {
-        return s_req_query_string;
-      }
-      else if (ch == '?')
-      {
-          return s_req_query_string;
-      }
-
-      break;
-
-    default:
-      break;
-  }
-
-  /* We should never fall out of the switch above unless there's an error */
-  return s_dead;
-}
-
-inline size_t http_parser_execute (http_parser *parser,
-                            const http_parser_settings *settings,
-                            const char *data,
-                            size_t len)
-{
-
-/* Tokens as defined by rfc 2616. Also lowercases them.
- *        token       = 1*<any CHAR except CTLs or separators>
- *     separators     = "(" | ")" | "<" | ">" | "@"
- *                    | "," | ";" | ":" | "\" | <">
- *                    | "/" | "[" | "]" | "?" | "="
- *                    | "{" | "}" | SP  | HT
- */
-static const char tokens[256] = {
-/*   0 nul    1 soh    2 stx    3 etx    4 eot    5 enq    6 ack    7 bel  */
-        0,       0,       0,       0,       0,       0,       0,       0,
-/*   8 bs     9 ht    10 nl    11 vt    12 np    13 cr    14 so    15 si   */
-        0,       0,       0,       0,       0,       0,       0,       0,
-/*  16 dle   17 dc1   18 dc2   19 dc3   20 dc4   21 nak   22 syn   23 etb */
-        0,       0,       0,       0,       0,       0,       0,       0,
-/*  24 can   25 em    26 sub   27 esc   28 fs    29 gs    30 rs    31 us  */
-        0,       0,       0,       0,       0,       0,       0,       0,
-/*  32 sp    33  !    34  "    35  #    36  $    37  %    38  &    39  '  */
-        0,      '!',      0,      '#',     '$',     '%',     '&',    '\'',
-/*  40  (    41  )    42  *    43  +    44  ,    45  -    46  .    47  /  */
-        0,       0,      '*',     '+',      0,      '-',     '.',      0,
-/*  48  0    49  1    50  2    51  3    52  4    53  5    54  6    55  7  */
-       '0',     '1',     '2',     '3',     '4',     '5',     '6',     '7',
-/*  56  8    57  9    58  :    59  ;    60  <    61  =    62  >    63  ?  */
-       '8',     '9',      0,       0,       0,       0,       0,       0,
-/*  64  @    65  A    66  B    67  C    68  D    69  E    70  F    71  G  */
-        0,      'a',     'b',     'c',     'd',     'e',     'f',     'g',
-/*  72  H    73  I    74  J    75  K    76  L    77  M    78  N    79  O  */
-       'h',     'i',     'j',     'k',     'l',     'm',     'n',     'o',
-/*  80  P    81  Q    82  R    83  S    84  T    85  U    86  V    87  W  */
-       'p',     'q',     'r',     's',     't',     'u',     'v',     'w',
-/*  88  X    89  Y    90  Z    91  [    92  \    93  ]    94  ^    95  _  */
-       'x',     'y',     'z',      0,       0,       0,      '^',     '_',
-/*  96  `    97  a    98  b    99  c   100  d   101  e   102  f   103  g  */
-       '`',     'a',     'b',     'c',     'd',     'e',     'f',     'g',
-/* 104  h   105  i   106  j   107  k   108  l   109  m   110  n   111  o  */
-       'h',     'i',     'j',     'k',     'l',     'm',     'n',     'o',
-/* 112  p   113  q   114  r   115  s   116  t   117  u   118  v   119  w  */
-       'p',     'q',     'r',     's',     't',     'u',     'v',     'w',
-/* 120  x   121  y   122  z   123  {   124  |   125  }   126  ~   127 del */
-       'x',     'y',     'z',      0,      '|',      0,      '~',       0 };
-
-
-static const int8_t unhex[256] =
-  {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-  , 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1
-  ,-1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1
-  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-  ,-1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1
-  ,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
-  };
-
-
-
-  char c, ch;
-  int8_t unhex_val;
-  const char *p = data;
-  const char *header_field_mark = 0;
-  const char *header_value_mark = 0;
-  const char *url_mark = 0;
-  const char *url_start_mark = 0;
-  const char *body_mark = 0;
-  const unsigned int lenient = parser->lenient_http_headers;
-  const unsigned int allow_chunked_length = parser->allow_chunked_length;
-
-  uint32_t nread = parser->nread;
-
-  /* We're in an error state. Don't bother doing anything. */
-  if (CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK) {
-    return 0;
-  }
-
-  if (len == 0) {
-    switch (parser->state) {
-      case s_body_identity_eof:
-        /* Use of CROW_CALLBACK_NOTIFY() here would erroneously return 1 byte read if we got paused. */
-        CROW_CALLBACK_NOTIFY_NOADVANCE(message_complete);
-        return 0;
-
-      case s_dead:
-      case s_start_req:
-        return 0;
-
-      default:
-        CROW_SET_ERRNO(CHPE_INVALID_EOF_STATE);
-        return 1;
-    }
-  }
-
-
-  if (parser->state == s_header_field)
-    header_field_mark = data;
-  if (parser->state == s_header_value)
-    header_value_mark = data;
-  switch (parser->state) {
-  case s_req_path:
-  case s_req_schema:
-  case s_req_schema_slash:
-  case s_req_schema_slash_slash:
-  case s_req_server_start:
-  case s_req_server:
-  case s_req_server_with_at:
-  case s_req_query_string_start:
-  case s_req_query_string:
-    url_mark = data;
-    break;
-  default:
-    break;
-  }
-
-  for (p=data; p != data + len; p++) {
-    ch = *p;
-
-    if (CROW_PARSING_HEADER(parser->state))
-      CROW_COUNT_HEADER_SIZE(1);
-
-reexecute:
-    switch (parser->state) {
-
-      case s_dead:
-        /* this state is used after a 'Connection: close' message
-         * the parser will error out if it reads another message
-         */
-        if (CROW_LIKELY(ch == cr || ch == lf))
-          break;
-
-        CROW_SET_ERRNO(CHPE_CLOSED_CONNECTION);
-        goto error;
-
-      case s_start_req:
-      {
-        if (ch == cr || ch == lf)
-          break;
-        parser->flags = 0;
-        parser->uses_transfer_encoding = 0;
-        parser->content_length = CROW_ULLONG_MAX;
-
-        if (CROW_UNLIKELY(!CROW_IS_ALPHA(ch))) {
-          CROW_SET_ERRNO(CHPE_INVALID_METHOD);
-          goto error;
-        }
-
-        parser->method = 0;
-        parser->index = 1;
-        switch (ch) {
-          case 'A': parser->method = (unsigned)HTTPMethod::Acl;                                                              break;
-          case 'B': parser->method = (unsigned)HTTPMethod::Bind;                                                             break;
-          case 'C': parser->method = (unsigned)HTTPMethod::Connect;   /* or COPY, CHECKOUT */                                break;
-          case 'D': parser->method = (unsigned)HTTPMethod::Delete;                                                           break;
-          case 'G': parser->method = (unsigned)HTTPMethod::Get;                                                              break;
-          case 'H': parser->method = (unsigned)HTTPMethod::Head;                                                             break;
-          case 'L': parser->method = (unsigned)HTTPMethod::Lock;      /* or LINK */                                          break;
-          case 'M': parser->method = (unsigned)HTTPMethod::MkCol;     /* or MOVE, MKACTIVITY, MERGE, M-SEARCH, MKCALENDAR */ break;
-          case 'N': parser->method = (unsigned)HTTPMethod::Notify;                                                           break;
-          case 'O': parser->method = (unsigned)HTTPMethod::Options;                                                          break;
-          case 'P': parser->method = (unsigned)HTTPMethod::Post;      /* or PROPFIND|PROPPATCH|PUT|PATCH|PURGE */            break;
-          case 'R': parser->method = (unsigned)HTTPMethod::Report;    /* or REBIND */                                        break;
-          case 'S': parser->method = (unsigned)HTTPMethod::Subscribe; /* or SEARCH, SOURCE */                                break;
-          case 'T': parser->method = (unsigned)HTTPMethod::Trace;                                                            break;
-          case 'U': parser->method = (unsigned)HTTPMethod::Unlock;    /* or UNSUBSCRIBE, UNBIND, UNLINK */                   break;
-          default:
-            CROW_SET_ERRNO(CHPE_INVALID_METHOD);
-            goto error;
-        }
-        parser->state = s_req_method;
-
-        CROW_CALLBACK_NOTIFY(message_begin);
-
-        break;
-      }
-
-      case s_req_method:
-      {
-        const char *matcher;
-        if (CROW_UNLIKELY(ch == '\0')) {
-          CROW_SET_ERRNO(CHPE_INVALID_METHOD);
-          goto error;
-        }
-
-        matcher = method_strings[parser->method];
-        if (ch == ' ' && matcher[parser->index] == '\0') {
-          parser->state = s_req_spaces_before_url;
-        } else if (ch == matcher[parser->index]) {
-          ; /* nada */
-        } else if ((ch >= 'A' && ch <= 'Z') || ch == '-') {
-
-          switch (parser->method << 16 | parser->index << 8 | ch) {
-#define CROW_XX(meth, pos, ch, new_meth) \
-            case ((unsigned)HTTPMethod::meth << 16 | pos << 8 | ch): \
-              parser->method = (unsigned)HTTPMethod::new_meth; break;
-
-            CROW_XX(Post,      1, 'U', Put)
-            CROW_XX(Post,      1, 'A', Patch)
-            CROW_XX(Post,      1, 'R', Propfind)
-            CROW_XX(Put,       2, 'R', Purge)
-            CROW_XX(Connect,   1, 'H', Checkout)
-            CROW_XX(Connect,   2, 'P', Copy)
-            CROW_XX(MkCol,     1, 'O', Move)
-            CROW_XX(MkCol,     1, 'E', Merge)
-            CROW_XX(MkCol,     1, '-', MSearch)
-            CROW_XX(MkCol,     2, 'A', MkActivity)
-            CROW_XX(MkCol,     3, 'A', MkCalendar)
-            CROW_XX(Subscribe, 1, 'E', Search)
-            CROW_XX(Subscribe, 1, 'O', Source)
-            CROW_XX(Report,    2, 'B', Rebind)
-            CROW_XX(Propfind,  4, 'P', Proppatch)
-            CROW_XX(Lock,      1, 'I', Link)
-            CROW_XX(Unlock,    2, 'S', Unsubscribe)
-            CROW_XX(Unlock,    2, 'B', Unbind)
-            CROW_XX(Unlock,    3, 'I', Unlink)
-#undef CROW_XX
-            default:
-              CROW_SET_ERRNO(CHPE_INVALID_METHOD);
-              goto error;
-          }
-        } else {
-          CROW_SET_ERRNO(CHPE_INVALID_METHOD);
-          goto error;
-        }
-
-        CROW_CALLBACK_NOTIFY_NOADVANCE(method);
-
-        ++parser->index;
-        break;
-      }
-
-      case s_req_spaces_before_url:
-      {
-        if (ch == ' ') break;
-
-        CROW_MARK(url);
-        CROW_MARK(url_start);
-        if (parser->method == (unsigned)HTTPMethod::Connect) {
-          parser->state = s_req_server_start;
-        }
-
-        parser->state = parse_url_char(static_cast<state>(parser->state), ch, parser, url_start_mark, p);
-        if (CROW_UNLIKELY(parser->state == s_dead)) {
-          CROW_SET_ERRNO(CHPE_INVALID_URL);
-          goto error;
-        }
-
-        break;
-      }
-
-      case s_req_schema:
-      case s_req_schema_slash:
-      case s_req_schema_slash_slash:
-      case s_req_server_start:
-      {
-        switch (ch) {
-          /* No whitespace allowed here */
-          case ' ':
-          case cr:
-          case lf:
-            CROW_SET_ERRNO(CHPE_INVALID_URL);
-            goto error;
-          default:
-            parser->state = parse_url_char(static_cast<state>(parser->state), ch, parser, url_start_mark, p);
-            if (CROW_UNLIKELY(parser->state == s_dead)) {
-              CROW_SET_ERRNO(CHPE_INVALID_URL);
-              goto error;
-            }
-        }
-
-        break;
-      }
-
-      case s_req_server:
-      case s_req_server_with_at:
-      case s_req_path:
-      case s_req_query_string_start:
-      case s_req_query_string:
-      {
-        switch (ch) {
-          case ' ':
-            parser->state = s_req_http_start;
-            CROW_CALLBACK_DATA(url);
-            break;
-          case cr: // No space after URL means no HTTP version. Which means the request is using HTTP/0.9
-          case lf:
-            if (CROW_UNLIKELY(parser->method != (unsigned)HTTPMethod::Get)) // HTTP/0.9 doesn't define any method other than GET
-            {
-              parser->state = s_dead;
-              CROW_SET_ERRNO(CHPE_INVALID_VERSION);
-              goto error;
-            }
-            parser->http_major = 0;
-            parser->http_minor = 9;
-            parser->state = (ch == cr) ?
-              s_req_line_almost_done :
-              s_header_field_start;
-            CROW_CALLBACK_DATA(url);
-            break;
-          default:
-            parser->state = parse_url_char(static_cast<state>(parser->state), ch, parser, url_start_mark, p);
-            if (CROW_UNLIKELY(parser->state == s_dead)) {
-              CROW_SET_ERRNO(CHPE_INVALID_URL);
-              goto error;
-            }
-        }
-        break;
-      }
-
-      case s_req_http_start:
-        switch (ch) {
-          case ' ':
-            break;
-          case 'H':
-            parser->state = s_req_http_H;
-            break;
-          case 'I':
-            if (parser->method == (unsigned)HTTPMethod::Source) {
-              parser->state = s_req_http_I;
-              break;
-            }
-            /* fall through */
-          default:
-            CROW_SET_ERRNO(CHPE_INVALID_CONSTANT);
-            goto error;
-        }
-        break;
-
-      case s_req_http_H:
-        CROW_STRICT_CHECK(ch != 'T');
-        parser->state = s_req_http_HT;
-        break;
-
-      case s_req_http_HT:
-        CROW_STRICT_CHECK(ch != 'T');
-        parser->state = s_req_http_HTT;
-        break;
-
-      case s_req_http_HTT:
-        CROW_STRICT_CHECK(ch != 'P');
-        parser->state = s_req_http_HTTP;
-        break;
-
-      case s_req_http_I:
-        CROW_STRICT_CHECK(ch != 'C');
-        parser->state = s_req_http_IC;
-        break;
-
-      case s_req_http_IC:
-        CROW_STRICT_CHECK(ch != 'E');
-        parser->state = s_req_http_HTTP;  /* Treat "ICE" as "HTTP". */
-        break;
-
-      case s_req_http_HTTP:
-        CROW_STRICT_CHECK(ch != '/');
-        parser->state = s_req_http_major;
-        break;
-
-      /* dot */
-      case s_req_http_major:
-        if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
-          CROW_SET_ERRNO(CHPE_INVALID_VERSION);
-          goto error;
-        }
-
-        parser->http_major = ch - '0';
-        parser->state = s_req_http_dot;
-        break;
-
-      case s_req_http_dot:
-      {
-        if (CROW_UNLIKELY(ch != '.')) {
-          CROW_SET_ERRNO(CHPE_INVALID_VERSION);
-          goto error;
-        }
-
-        parser->state = s_req_http_minor;
-        break;
-      }
-
-      /* minor HTTP version */
-      case s_req_http_minor:
-        if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
-          CROW_SET_ERRNO(CHPE_INVALID_VERSION);
-          goto error;
-        }
-
-        parser->http_minor = ch - '0';
-        parser->state = s_req_http_end;
-        break;
-
-      /* end of request line */
-      case s_req_http_end:
-      {
-        if (ch == cr) {
-          parser->state = s_req_line_almost_done;
-          break;
-        }
-
-        if (ch == lf) {
-          parser->state = s_header_field_start;
-          break;
-        }
-
-        CROW_SET_ERRNO(CHPE_INVALID_VERSION);
-        goto error;
-        break;
-      }
-
-      /* end of request line */
-      case s_req_line_almost_done:
-      {
-        if (CROW_UNLIKELY(ch != lf)) {
-          CROW_SET_ERRNO(CHPE_LF_EXPECTED);
-          goto error;
-        }
-
-        parser->state = s_header_field_start;
-        break;
-      }
-
-      case s_header_field_start:
-      {
-        if (ch == cr) {
-          parser->state = s_headers_almost_done;
-          break;
-        }
-
-        if (ch == lf) {
-          /* they might be just sending \n instead of \r\n so this would be
-           * the second \n to denote the end of headers*/
-          parser->state = s_headers_almost_done;
-          CROW_REEXECUTE();
-        }
-
-        c = CROW_TOKEN(ch);
-
-        if (CROW_UNLIKELY(!c)) {
-          CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
-          goto error;
-        }
-
-        CROW_MARK(header_field);
-
-        parser->index = 0;
-        parser->state = s_header_field;
-
-        switch (c) {
-          case 'c':
-            parser->header_state = h_C;
-            break;
-
-          case 'p':
-            parser->header_state = h_matching_proxy_connection;
-            break;
-
-          case 't':
-            parser->header_state = h_matching_transfer_encoding;
-            break;
-
-          case 'u':
-            parser->header_state = h_matching_upgrade;
-            break;
-
-          default:
-            parser->header_state = h_general;
-            break;
-        }
-        break;
-      }
-
-      case s_header_field:
-      {
-        const char* start = p;
-        for (; p != data + len; p++) {
-          ch = *p;
-          c = CROW_TOKEN(ch);
-
-          if (!c)
-            break;
-
-          switch (parser->header_state) {
-            case h_general: {
-              size_t left = data + len - p;
-              const char* pe = p + CROW_MIN(left, max_header_size);
-              while (p+1 < pe && CROW_TOKEN(p[1])) {
-                p++;
-              }
-              break;
-            }
-
-            case h_C:
-              parser->index++;
-              parser->header_state = (c == 'o' ? h_CO : h_general);
-              break;
-
-            case h_CO:
-              parser->index++;
-              parser->header_state = (c == 'n' ? h_CON : h_general);
-              break;
-
-            case h_CON:
-              parser->index++;
-              switch (c) {
-                case 'n':
-                  parser->header_state = h_matching_connection;
-                  break;
-                case 't':
-                  parser->header_state = h_matching_content_length;
-                  break;
-                default:
-                  parser->header_state = h_general;
-                  break;
-              }
-              break;
-
-            /* connection */
-
-            case h_matching_connection:
-              parser->index++;
-              if (parser->index > sizeof(CROW_CONNECTION)-1 || c != CROW_CONNECTION[parser->index]) {
-                parser->header_state = h_general;
-              } else if (parser->index == sizeof(CROW_CONNECTION)-2) {
-                parser->header_state = h_connection;
-              }
-              break;
-
-            /* proxy-connection */
-
-            case h_matching_proxy_connection:
-              parser->index++;
-              if (parser->index > sizeof(CROW_PROXY_CONNECTION)-1 || c != CROW_PROXY_CONNECTION[parser->index]) {
-                parser->header_state = h_general;
-              } else if (parser->index == sizeof(CROW_PROXY_CONNECTION)-2) {
-                parser->header_state = h_connection;
-              }
-              break;
-
-            /* content-length */
-
-            case h_matching_content_length:
-              parser->index++;
-              if (parser->index > sizeof(CROW_CONTENT_LENGTH)-1 || c != CROW_CONTENT_LENGTH[parser->index]) {
-                parser->header_state = h_general;
-              } else if (parser->index == sizeof(CROW_CONTENT_LENGTH)-2) {
-                parser->header_state = h_content_length;
-              }
-              break;
-
-            /* transfer-encoding */
-
-            case h_matching_transfer_encoding:
-              parser->index++;
-              if (parser->index > sizeof(CROW_TRANSFER_ENCODING)-1 || c != CROW_TRANSFER_ENCODING[parser->index]) {
-                parser->header_state = h_general;
-              } else if (parser->index == sizeof(CROW_TRANSFER_ENCODING)-2) {
-                parser->header_state = h_transfer_encoding;
-                parser->uses_transfer_encoding = 1;
-              }
-              break;
-
-            /* upgrade */
-
-            case h_matching_upgrade:
-              parser->index++;
-              if (parser->index > sizeof(CROW_UPGRADE)-1 || c != CROW_UPGRADE[parser->index]) {
-                parser->header_state = h_general;
-              } else if (parser->index == sizeof(CROW_UPGRADE)-2) {
-                parser->header_state = h_upgrade;
-              }
-              break;
-
-            case h_connection:
-            case h_content_length:
-            case h_transfer_encoding:
-            case h_upgrade:
-              if (ch != ' ') parser->header_state = h_general;
-              break;
-
-            default:
-              assert(0 && "Unknown header_state");
-              break;
-          }
-        }
-
-        if (p == data + len) {
-          --p;
-          CROW_COUNT_HEADER_SIZE(p - start);
-          break;
-        }
-
-        CROW_COUNT_HEADER_SIZE(p - start);
-
-        if (ch == ':') {
-          parser->state = s_header_value_discard_ws;
-          CROW_CALLBACK_DATA(header_field);
-          break;
-        }
-/* RFC-7230 Sec 3.2.4 expressly forbids line-folding in header field-names.
-        if (ch == cr) {
-          parser->state = s_header_almost_done;
-          CROW_CALLBACK_DATA(header_field);
-          break;
-        }
-
-        if (ch == lf) {
-          parser->state = s_header_field_start;
-          CROW_CALLBACK_DATA(header_field);
-          break;
-        }
-*/
-        CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
-        goto error;
-      }
-
-      case s_header_value_discard_ws:
-        if (ch == ' ' || ch == '\t') break;
-
-        if (ch == cr) {
-          parser->state = s_header_value_discard_ws_almost_done;
-          break;
-        }
-
-        if (ch == lf) {
-          parser->state = s_header_value_discard_lws;
-          break;
-        }
-
-        /* fall through */
-
-      case s_header_value_start:
-      {
-        CROW_MARK(header_value);
-
-        parser->state = s_header_value;
-        parser->index = 0;
-
-        c = CROW_LOWER(ch);
-
-        switch (parser->header_state) {
-          case h_upgrade:
-            // Crow does not support HTTP/2 at the moment.
-            // According to the RFC https://datatracker.ietf.org/doc/html/rfc7540#section-3.2
-            // "A server that does not support HTTP/2 can respond to the request as though the Upgrade header field were absent"
-            // => `F_UPGRADE` is not set if the header starts by "h2".
-            // This prevents the parser from skipping the request body.
-            if (ch != 'h' || p+1 == (data + len) || *(p+1) != '2') {
-              parser->flags |= F_UPGRADE;
-            }
-            parser->header_state = h_general;
-            break;
-
-          case h_transfer_encoding:
-            /* looking for 'Transfer-Encoding: chunked' */
-            if ('c' == c) {
-              parser->header_state = h_matching_transfer_encoding_chunked;
-            } else {
-              parser->header_state = h_matching_transfer_encoding_token;
-            }
-            break;
-
-          /* Multi-value `Transfer-Encoding` header */
-          case h_matching_transfer_encoding_token_start:
-            break;
-
-          case h_content_length:
-            if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
-              CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
-              goto error;
-            }
-
-            if (parser->flags & F_CONTENTLENGTH) {
-              CROW_SET_ERRNO(CHPE_UNEXPECTED_CONTENT_LENGTH);
-              goto error;
-            }
-            parser->flags |= F_CONTENTLENGTH;
-            parser->content_length = ch - '0';
-            parser->header_state = h_content_length_num;
-            break;
-
-          /* when obsolete line folding is encountered for content length
-           * continue to the s_header_value state */
-          case h_content_length_ws:
-            break;
-
-          case h_connection:
-            /* looking for 'Connection: keep-alive' */
-            if (c == 'k') {
-              parser->header_state = h_matching_connection_keep_alive;
-            /* looking for 'Connection: close' */
-            } else if (c == 'c') {
-              parser->header_state = h_matching_connection_close;
-            } else if (c == ' ' || c == '\t') {
-              /* Skip lws */
-            } else {
-              parser->header_state = h_general;
-            }
-            break;
-
-          default:
-            parser->header_state = h_general;
-            break;
-        }
-        break;
-      }
-
-      case s_header_value:
-      {
-        const char* start = p;
-        enum header_states h_state = static_cast<header_states>(parser->header_state);
-        for (; p != data + len; p++) {
-          ch = *p;
-
-          if (ch == cr) {
-            parser->state = s_header_almost_done;
-            parser->header_state = h_state;
-            CROW_CALLBACK_DATA(header_value);
-            break;
-          }
-
-          if (ch == lf) {
-            parser->state = s_header_almost_done;
-            CROW_COUNT_HEADER_SIZE(p - start);
-            parser->header_state = h_state;
-            CROW_CALLBACK_DATA_NOADVANCE(header_value);
-            CROW_REEXECUTE();
-          }
-
-          if (!lenient && !CROW_IS_HEADER_CHAR(ch)) {
-            CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
-            goto error;
-          }
-
-          c = CROW_LOWER(ch);
-
-          switch (h_state) {
-            case h_general:
-              {
-                size_t left = data + len - p;
-                const char* pe = p + CROW_MIN(left, max_header_size);
-
-                for (; p != pe; p++) {
-                  ch = *p;
-                  if (ch == cr || ch == lf) {
-                    --p;
-                    break;
-                  }
-                  if (!lenient && !CROW_IS_HEADER_CHAR(ch)) {
-                    CROW_SET_ERRNO(CHPE_INVALID_HEADER_TOKEN);
-                    goto error;
-                  }
-                }
-                if (p == data + len)
-                  --p;
-                break;
-              }
-
-            case h_connection:
-            case h_transfer_encoding:
-              assert(0 && "Shouldn't get here.");
-              break;
-
-            case h_content_length:
-              if (ch == ' ') break;
-              h_state = h_content_length_num;
-              /* fall through */
-
-            case h_content_length_num:
-            {
-              uint64_t t;
-
-              if (ch == ' ') {
-                h_state = h_content_length_ws;
-                break;
-              }
-
-              if (CROW_UNLIKELY(!CROW_IS_NUM(ch))) {
-                CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
-                parser->header_state = h_state;
-                goto error;
-              }
-
-              t = parser->content_length;
-              t *= 10;
-              t += ch - '0';
-
-              /* Overflow? Test against a conservative limit for simplicity. */
-              if (CROW_UNLIKELY((CROW_ULLONG_MAX - 10) / 10 < parser->content_length)) {
-                CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
-                parser->header_state = h_state;
-                goto error;
-              }
-
-              parser->content_length = t;
-              break;
-            }
-
-            case h_content_length_ws:
-              if (ch == ' ') break;
-              CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
-              parser->header_state = h_state;
-              goto error;
-
-            /* Transfer-Encoding: chunked */
-            case h_matching_transfer_encoding_token_start:
-              /* looking for 'Transfer-Encoding: chunked' */
-              if ('c' == c) {
-                h_state = h_matching_transfer_encoding_chunked;
-              } else if (CROW_TOKEN(c)) {
-                /* TODO(indutny): similar code below does this, but why?
-                 * At the very least it seems to be inconsistent given that
-                 * h_matching_transfer_encoding_token does not check for
-                 * `STRICT_TOKEN`
-                 */
-                h_state = h_matching_transfer_encoding_token;
-              } else if (c == ' ' || c == '\t') {
-                /* Skip lws */
-              } else {
-                h_state = h_general;
-              }
-              break;
-
-            case h_matching_transfer_encoding_chunked:
-              parser->index++;
-              if (parser->index > sizeof(CROW_CHUNKED)-1 || c != CROW_CHUNKED[parser->index]) {
-                h_state = h_matching_transfer_encoding_token;
-              } else if (parser->index == sizeof(CROW_CHUNKED)-2) {
-                h_state = h_transfer_encoding_chunked;
-              }
-              break;
-
-            case h_matching_transfer_encoding_token:
-              if (ch == ',') {
-                h_state = h_matching_transfer_encoding_token_start;
-                parser->index = 0;
-              }
-              break;
-
-            /* looking for 'Connection: keep-alive' */
-            case h_matching_connection_keep_alive:
-              parser->index++;
-              if (parser->index > sizeof(CROW_KEEP_ALIVE)-1 || c != CROW_KEEP_ALIVE[parser->index]) {
-                h_state = h_general;
-              } else if (parser->index == sizeof(CROW_KEEP_ALIVE)-2) {
-                h_state = h_connection_keep_alive;
-              }
-              break;
-
-            /* looking for 'Connection: close' */
-            case h_matching_connection_close:
-              parser->index++;
-              if (parser->index > sizeof(CROW_CLOSE)-1 || c != CROW_CLOSE[parser->index]) {
-                h_state = h_general;
-              } else if (parser->index == sizeof(CROW_CLOSE)-2) {
-                h_state = h_connection_close;
-              }
-              break;
-
-              // Edited from original (because of commits that werent included)
-            case h_transfer_encoding_chunked:
-              if (ch != ' ') h_state = h_matching_transfer_encoding_token;
-              break;
-            case h_connection_keep_alive:
-            case h_connection_close:
-              if (ch != ' ') h_state = h_general;
-              break;
-
-            default:
-              parser->state = s_header_value;
-              h_state = h_general;
-              break;
-          }
-        }
-        parser->header_state = h_state;
-
-
-        if (p == data + len)
-          --p;
-
-        CROW_COUNT_HEADER_SIZE(p - start);
-        break;
-      }
-
-      case s_header_almost_done:
-      {
-        if (CROW_UNLIKELY(ch != lf)) {
-          CROW_SET_ERRNO(CHPE_LF_EXPECTED);
-          goto error;
-        }
-
-        parser->state = s_header_value_lws;
-        break;
-      }
-
-      case s_header_value_lws:
-      {
-        if (ch == ' ' || ch == '\t') {
-          if (parser->header_state == h_content_length_num) {
-              /* treat obsolete line folding as space */
-              parser->header_state = h_content_length_ws;
-          }
-          parser->state = s_header_value_start;
-          CROW_REEXECUTE();
-        }
-
-        /* finished the header */
-        switch (parser->header_state) {
-          case h_connection_keep_alive:
-            parser->flags |= F_CONNECTION_KEEP_ALIVE;
-            break;
-          case h_connection_close:
-            parser->flags |= F_CONNECTION_CLOSE;
-            break;
-          case h_transfer_encoding_chunked:
-            parser->flags |= F_CHUNKED;
-            break;
-          default:
-            break;
-        }
-
-        parser->state = s_header_field_start;
-        CROW_REEXECUTE();
-      }
-
-      case s_header_value_discard_ws_almost_done:
-      {
-        CROW_STRICT_CHECK(ch != lf);
-        parser->state = s_header_value_discard_lws;
-        break;
-      }
-
-      case s_header_value_discard_lws:
-      {
-        if (ch == ' ' || ch == '\t') {
-          parser->state = s_header_value_discard_ws;
-          break;
-        } else {
-          /* header value was empty */
-          CROW_MARK(header_value);
-          parser->state = s_header_field_start;
-          CROW_CALLBACK_DATA_NOADVANCE(header_value);
-          CROW_REEXECUTE();
-        }
-      }
-
-      case s_headers_almost_done:
-      {
-        CROW_STRICT_CHECK(ch != lf);
-
-        if (parser->flags & F_TRAILING) {
-          /* End of a chunked request */
-          CROW_CALLBACK_NOTIFY(message_complete);
-          break;
-        }
-
-        /* Cannot use transfer-encoding and a content-length header together
-           per the HTTP specification. (RFC 7230 Section 3.3.3) */
-        if ((parser->uses_transfer_encoding == 1) &&
-            (parser->flags & F_CONTENTLENGTH)) {
-          /* Allow it for lenient parsing as long as `Transfer-Encoding` is
-           * not `chunked` or allow_length_with_encoding is set
-           */
-          if (parser->flags & F_CHUNKED) {
-            if (!allow_chunked_length) {
-              CROW_SET_ERRNO(CHPE_UNEXPECTED_CONTENT_LENGTH);
-              goto error;
-            }
-          } else if (!lenient) {
-            CROW_SET_ERRNO(CHPE_UNEXPECTED_CONTENT_LENGTH);
-            goto error;
-          }
-        }
-
-        parser->state = s_headers_done;
-
-        /* Set this here so that on_headers_complete() callbacks can see it */
-        parser->upgrade =
-          (parser->flags & F_UPGRADE || parser->method == (unsigned)HTTPMethod::Connect);
-
-        /* Here we call the headers_complete callback. This is somewhat
-         * different than other callbacks because if the user returns 1, we
-         * will interpret that as saying that this message has no body. This
-         * is needed for the annoying case of recieving a response to a HEAD
-         * request.
-         *
-         * We'd like to use CROW_CALLBACK_NOTIFY_NOADVANCE() here but we cannot, so
-         * we have to simulate it by handling a change in errno below.
-         */
-        if (settings->on_headers_complete) {
-          switch (settings->on_headers_complete(parser)) {
-            case 0:
-              break;
-
-            case 2:
-              parser->upgrade = 1;
-              //break;
-
-            /* fall through */
-            case 1:
-              parser->flags |= F_SKIPBODY;
-              break;
-
-            default:
-              CROW_SET_ERRNO(CHPE_CB_headers_complete);
-              parser->nread = nread;
-              return p - data; /* Error */
-          }
-        }
-
-        if (CROW_HTTP_PARSER_ERRNO(parser) != CHPE_OK) {
-          parser->nread = nread;
-          return p - data;
-        }
-
-        CROW_REEXECUTE();
-      }
-
-      case s_headers_done:
-      {
-        CROW_STRICT_CHECK(ch != lf);
-
-        parser->nread = 0;
-        nread = 0;
-
-        /* Exit, the rest of the connect is in a different protocol. */
-        if (parser->upgrade) {
-          CROW_CALLBACK_NOTIFY(message_complete);
-          parser->nread = nread;
-          return (p - data) + 1;
-        }
-
-        if (parser->flags & F_SKIPBODY) {
-          CROW_CALLBACK_NOTIFY(message_complete);
-        } else if (parser->flags & F_CHUNKED) {
-          /* chunked encoding - ignore Content-Length header,
-           * prepare for a chunk */
-            parser->state = s_chunk_size_start;
-        }
-        else if (parser->uses_transfer_encoding == 1)
-        {
-            if (!lenient)
-            {
-                /* RFC 7230 3.3.3 */
-
-                /* If a Transfer-Encoding header field
-             * is present in a request and the chunked transfer coding is not
-             * the final encoding, the message body length cannot be determined
-             * reliably; the server MUST respond with the 400 (Bad Request)
-             * status code and then close the connection.
-             */
-                CROW_SET_ERRNO(CHPE_INVALID_TRANSFER_ENCODING);
-                parser->nread = nread;
-                return (p - data); /* Error */
-            }
-            else
-            {
-                /* RFC 7230 3.3.3 */
-
-                /* If a Transfer-Encoding header field is present in a response and
-             * the chunked transfer coding is not the final encoding, the
-             * message body length is determined by reading the connection until
-             * it is closed by the server.
-             */
-                parser->state = s_body_identity_eof;
-            }
-        }
-        else
-        {
-            if (parser->content_length == 0)
-            {
-                /* Content-Length header given but zero: Content-Length: 0\r\n */
-                CROW_CALLBACK_NOTIFY(message_complete);
-            }
-            else if (parser->content_length != CROW_ULLONG_MAX)
-            {
-                /* Content-Length header given and non-zero */
-                parser->state = s_body_identity;
-            }
-            else
-            {
-                /* Assume content-length 0 - read the next */
-                CROW_CALLBACK_NOTIFY(message_complete);
-            }
-        }
-
-        break;
-      }
-
-      case s_body_identity:
-      {
-        uint64_t to_read = CROW_MIN(parser->content_length,
-                               (uint64_t) ((data + len) - p));
-
-        assert(parser->content_length != 0
-            && parser->content_length != CROW_ULLONG_MAX);
-
-        /* The difference between advancing content_length and p is because
-         * the latter will automaticaly advance on the next loop iteration.
-         * Further, if content_length ends up at 0, we want to see the last
-         * byte again for our message complete callback.
-         */
-        CROW_MARK(body);
-        parser->content_length -= to_read;
-        p += to_read - 1;
-
-        if (parser->content_length == 0) {
-          parser->state = s_message_done;
-
-          /* Mimic CROW_CALLBACK_DATA_NOADVANCE() but with one extra byte.
-           *
-           * The alternative to doing this is to wait for the next byte to
-           * trigger the data callback, just as in every other case. The
-           * problem with this is that this makes it difficult for the test
-           * harness to distinguish between complete-on-EOF and
-           * complete-on-length. It's not clear that this distinction is
-           * important for applications, but let's keep it for now.
-           */
-          CROW_CALLBACK_DATA_(body, p - body_mark + 1, p - data);
-          CROW_REEXECUTE();
-        }
-
-        break;
-      }
-
-      /* read until EOF */
-      case s_body_identity_eof:
-        CROW_MARK(body);
-        p = data + len - 1;
-
-        break;
-
-      case s_message_done:
-        CROW_CALLBACK_NOTIFY(message_complete);
-        break;
-
-      case s_chunk_size_start:
-      {
-        assert(nread == 1);
-        assert(parser->flags & F_CHUNKED);
-
-        unhex_val = unhex[static_cast<unsigned char>(ch)];
-        if (CROW_UNLIKELY(unhex_val == -1)) {
-          CROW_SET_ERRNO(CHPE_INVALID_CHUNK_SIZE);
-          goto error;
-        }
-
-        parser->content_length = unhex_val;
-        parser->state = s_chunk_size;
-        break;
-      }
-
-      case s_chunk_size:
-      {
-        uint64_t t;
-
-        assert(parser->flags & F_CHUNKED);
-
-        if (ch == cr) {
-          parser->state = s_chunk_size_almost_done;
-          break;
-        }
-
-        unhex_val = unhex[static_cast<unsigned char>(ch)];
-
-        if (unhex_val == -1) {
-          if (ch == ';' || ch == ' ') {
-            parser->state = s_chunk_parameters;
-            break;
-          }
-
-          CROW_SET_ERRNO(CHPE_INVALID_CHUNK_SIZE);
-          goto error;
-        }
-
-        t = parser->content_length;
-        t *= 16;
-        t += unhex_val;
-
-        /* Overflow? Test against a conservative limit for simplicity. */
-        if (CROW_UNLIKELY((CROW_ULLONG_MAX - 16) / 16 < parser->content_length)) {
-          CROW_SET_ERRNO(CHPE_INVALID_CONTENT_LENGTH);
-          goto error;
-        }
-
-        parser->content_length = t;
-        break;
-      }
-
-      case s_chunk_parameters:
-      {
-        assert(parser->flags & F_CHUNKED);
-        /* just ignore this shit. TODO check for overflow */
-        if (ch == cr) {
-          parser->state = s_chunk_size_almost_done;
-          break;
-        }
-        break;
-      }
-
-      case s_chunk_size_almost_done:
-      {
-        assert(parser->flags & F_CHUNKED);
-        CROW_STRICT_CHECK(ch != lf);
-
-        parser->nread = 0;
-        nread = 0;
-
-        if (parser->content_length == 0) {
-          parser->flags |= F_TRAILING;
-          parser->state = s_header_field_start;
-        } else {
-          parser->state = s_chunk_data;
-        }
-        break;
-      }
-
-      case s_chunk_data:
-      {
-        uint64_t to_read = CROW_MIN(parser->content_length,
-                               (uint64_t) ((data + len) - p));
-
-        assert(parser->flags & F_CHUNKED);
-        assert(parser->content_length != 0
-            && parser->content_length != CROW_ULLONG_MAX);
-
-        /* See the explanation in s_body_identity for why the content
-         * length and data pointers are managed this way.
-         */
-        CROW_MARK(body);
-        parser->content_length -= to_read;
-        p += to_read - 1;
-
-        if (parser->content_length == 0) {
-          parser->state = s_chunk_data_almost_done;
-        }
-
-        break;
-      }
-
-      case s_chunk_data_almost_done:
-        assert(parser->flags & F_CHUNKED);
-        assert(parser->content_length == 0);
-        CROW_STRICT_CHECK(ch != cr);
-        parser->state = s_chunk_data_done;
-        CROW_CALLBACK_DATA(body);
-        break;
-
-      case s_chunk_data_done:
-        assert(parser->flags & F_CHUNKED);
-        CROW_STRICT_CHECK(ch != lf);
-        parser->nread = 0;
-        nread = 0;
-        parser->state = s_chunk_size_start;
-        break;
-
-      default:
-        assert(0 && "unhandled state");
-        CROW_SET_ERRNO(CHPE_INVALID_INTERNAL_STATE);
-        goto error;
-    }
-  }
-
-  /* Run callbacks for any marks that we have leftover after we ran out of
-   * bytes. There should be at most one of these set, so it's OK to invoke
-   * them in series (unset marks will not result in callbacks).
-   *
-   * We use the NOADVANCE() variety of callbacks here because 'p' has already
-   * overflowed 'data' and this allows us to correct for the off-by-one that
-   * we'd otherwise have (since CROW_CALLBACK_DATA() is meant to be run with a 'p'
-   * value that's in-bounds).
-   */
-
-  assert(((header_field_mark ? 1 : 0) +
-          (header_value_mark ? 1 : 0) +
-          (url_mark ? 1 : 0)  +
-          (body_mark ? 1 : 0)) <= 1);
-
-  CROW_CALLBACK_DATA_NOADVANCE(header_field);
-  CROW_CALLBACK_DATA_NOADVANCE(header_value);
-  CROW_CALLBACK_DATA_NOADVANCE(url);
-  CROW_CALLBACK_DATA_NOADVANCE(body);
-
-  parser->nread = nread;
-  return len;
-
-error:
-  if (CROW_HTTP_PARSER_ERRNO(parser) == CHPE_OK) {
-    CROW_SET_ERRNO(CHPE_UNKNOWN);
-  }
-
-  parser->nread = nread;
-  return (p - data);
-}
-
-inline void
-  http_parser_init(http_parser* parser)
-{
-  void *data = parser->data; /* preserve application data */
-  memset(parser, 0, sizeof(*parser));
-  parser->data = data;
-  parser->state = s_start_req;
-  parser->http_errno = CHPE_OK;
-}
-
-/* Return a string name of the given error */
-inline const char *
-http_errno_name(enum http_errno err) {
-/* Map errno values to strings for human-readable output */
-#define CROW_HTTP_STRERROR_GEN(n, s) { "CHPE_" #n, s },
-static struct {
-  const char *name;
-  const char *description;
-} http_strerror_tab[] = {
-  CROW_HTTP_ERRNO_MAP(CROW_HTTP_STRERROR_GEN)
-};
-#undef CROW_HTTP_STRERROR_GEN
-  assert(((size_t) err) < CROW_ARRAY_SIZE(http_strerror_tab));
-  return http_strerror_tab[err].name;
-}
-
-/* Return a string description of the given error */
-inline const char *
-http_errno_description(enum http_errno err) {
-/* Map errno values to strings for human-readable output */
-#define CROW_HTTP_STRERROR_GEN(n, s) { "CHPE_" #n, s },
-static struct {
-  const char *name;
-  const char *description;
-} http_strerror_tab[] = {
-  CROW_HTTP_ERRNO_MAP(CROW_HTTP_STRERROR_GEN)
-};
-#undef CROW_HTTP_STRERROR_GEN
-  assert(((size_t) err) < CROW_ARRAY_SIZE(http_strerror_tab));
-  return http_strerror_tab[err].description;
-}
-
-/* Checks if this is the final chunk of the body. */
-inline int
-http_body_is_final(const struct http_parser *parser) {
-    return parser->state == s_message_done;
-}
-
-/* Change the maximum header size provided at compile time. */
-inline void
-http_parser_set_max_header_size(uint32_t size) {
-  max_header_size = size;
-}
-
-#undef CROW_HTTP_ERRNO_MAP
-#undef CROW_SET_ERRNO
-#undef CROW_CALLBACK_NOTIFY_
-#undef CROW_CALLBACK_NOTIFY
-#undef CROW_CALLBACK_NOTIFY_NOADVANCE
-#undef CROW_CALLBACK_DATA_
-#undef CROW_CALLBACK_DATA
-#undef CROW_CALLBACK_DATA_NOADVANCE
-#undef CROW_MARK
-#undef CROW_PROXY_CONNECTION
-#undef CROW_CONNECTION
-#undef CROW_CONTENT_LENGTH
-#undef CROW_TRANSFER_ENCODING
-#undef CROW_UPGRADE
-#undef CROW_CHUNKED
-#undef CROW_KEEP_ALIVE
-#undef CROW_CLOSE
-#undef CROW_PARSING_HEADER
-#undef CROW_LOWER
-#undef CROW_IS_ALPHA
-#undef CROW_IS_NUM
-#undef CROW_IS_ALPHANUM
-//#undef CROW_IS_HEX
-#undef CROW_IS_MARK
-#undef CROW_IS_USERINFO_CHAR
-#undef CROW_TOKEN
-#undef CROW_IS_URL_CHAR
-//#undef CROW_IS_HOST_CHAR
-#undef CROW_STRICT_CHECK
-
-}
-
-// clang-format on
-
-
-#ifdef CROW_USE_BOOST
-#include <boost/asio.hpp>
-#include <boost/asio/basic_waitable_timer.hpp>
-#else
-#ifndef ASIO_STANDALONE
-#define ASIO_STANDALONE
-#endif
-#include <asio.hpp>
-#include <asio/basic_waitable_timer.hpp>
-#endif
-
-#include <chrono>
-#include <functional>
-#include <map>
-#include <vector>
-
-
-namespace crow
-{
-#ifdef CROW_USE_BOOST
-    namespace asio = boost::asio;
-    using error_code = boost::system::error_code;
-#else
-    using error_code = asio::error_code;
-#endif
-    namespace detail
-    {
-
-        /// A class for scheduling functions to be called after a specific
-        /// amount of ticks. Ther tick length can  be handed over in constructor, 
-        /// the default tick length is equal to 1 second.
-        class task_timer
-        {
-        public:
-            using task_type = std::function<void()>;
-            using identifier_type = size_t;
-
-        private:
-            using clock_type = std::chrono::steady_clock;
-            using time_type = clock_type::time_point;
-        public:
-            task_timer(asio::io_context& io_context,
-                       const std::chrono::milliseconds tick_length =
-                            std::chrono::seconds(1)) :
-              io_context_(io_context), timer_(io_context_),
-              tick_length_ms_(tick_length)
-            {
-                timer_.expires_after(tick_length_ms_);
-                timer_.async_wait(
-                  std::bind(&task_timer::tick_handler, this,
-                  std::placeholders::_1));
-            }
-
-            ~task_timer() { timer_.cancel(); }
-
-            /// Cancel the scheduling of the given task 
-            ///
-            /// \param identifier_type task identifier of the task to cancel.
-            void cancel(identifier_type id)
-            {
-                tasks_.erase(id);
-                CROW_LOG_DEBUG << "task_timer task cancelled: " << this << ' ' << id;
-            }
-
-            /// Schedule the given task to be executed after the default amount
-            /// of ticks.
-
-            ///
-            /// \return identifier_type Used to cancel the thread.
-            /// It is not bound to this task_timer instance and in some cases
-            /// could lead to undefined behavior if used with other task_timer
-            /// objects or after the task has been successfully executed.
-            identifier_type schedule(const task_type& task)
-            {
-                return schedule(task, get_default_timeout());
-            }
-
-            /// Schedule the given task to be executed after the given time.
-
-            ///
-            /// \param timeout The amount of ticks to wait before execution.
-            ///
-            /// \return identifier_type Used to cancel the thread.
-            /// It is not bound to this task_timer instance and in some cases
-            /// could lead to undefined behavior if used with other task_timer
-            /// objects or after the task has been successfully executed.
-            identifier_type schedule(const task_type& task, uint8_t timeout)
-            {
-                tasks_.insert({++highest_id_,
-                               {clock_type::now() + (timeout * tick_length_ms_),
-                                task}});
-                CROW_LOG_DEBUG << "task_timer scheduled: " << this << ' ' <<
-                                  highest_id_;
-                return highest_id_;
-            }
-
-            /// Set the default timeout for this task_timer instance.
-            /// (Default: 5)
-
-            ///
-            /// \param timeout The amount of ticks to wait before
-            /// execution. 
-            /// For tick length \see tick_length_ms_ 
-            void set_default_timeout(uint8_t timeout) {
-                default_timeout_ = timeout;
-            }
-
-            /// Get the default timeout. (Default: 5)
-            uint8_t get_default_timeout() const {
-                return default_timeout_;
-            }
-
-            /// returns the length of one tick.
-            std::chrono::milliseconds get_tick_length() const {
-                return tick_length_ms_;
-            }
-
-        private:
-            void process_tasks()
-            {
-                time_type current_time = clock_type::now();
-                std::vector<identifier_type> finished_tasks;
-
-                for (const auto& task : tasks_)
-                {
-                    if (task.second.first < current_time)
-                    {
-                        (task.second.second)();
-                        finished_tasks.push_back(task.first);
-                        CROW_LOG_DEBUG << "task_timer called: " << this <<
-                                          ' ' << task.first;
-                    }
-                }
-
-                for (const auto& task : finished_tasks)
-                    tasks_.erase(task);
-
-                // If no task is currently scheduled, reset the issued ids back
-                // to 0.
-                if (tasks_.empty()) highest_id_ = 0;
-            }
-
-            void tick_handler(const error_code& ec)
-            {
-                if (ec) return;
-
-                process_tasks();
-
-                timer_.expires_after(tick_length_ms_);
-                timer_.async_wait(
-                  std::bind(&task_timer::tick_handler, this, std::placeholders::_1));
-            }
-
-        private:
-            asio::io_context& io_context_;
-            asio::basic_waitable_timer<clock_type> timer_;
-            std::map<identifier_type, std::pair<time_type, task_type>> tasks_;
-
-            // A continuously increasing number to be issued to threads to
-            // identify them. If no tasks are scheduled, it will be reset to 0.
-            identifier_type highest_id_{0};
-            std::chrono::milliseconds tick_length_ms_;
-            uint8_t default_timeout_{5};
-
-        };
-    } // namespace detail
-} // namespace crow
-
-
-#ifdef CROW_USE_BOOST
-#include <boost/asio.hpp>
-#else
-#ifndef ASIO_STANDALONE
-#define ASIO_STANDALONE
-#endif
-#include <asio.hpp>
-#endif
-
-
-namespace crow // NOTE: Already documented in "crow/app.h"
-{
-#ifdef CROW_USE_BOOST
-    namespace asio = boost::asio;
-#endif
-
-    /// Find and return the value associated with the key. (returns an empty string if nothing is found)
-    template<typename T>
-    inline const std::string& get_header_value(const T& headers, const std::string& key)
-    {
-        if (headers.count(key))
-        {
-            return headers.find(key)->second;
-        }
-        static std::string empty;
-        return empty;
-    }
-
-    /// An HTTP request.
-    struct request
-    {
-        HTTPMethod method;
-        std::string raw_url;     ///< The full URL containing the `?` and URL parameters.
-        std::string url;         ///< The endpoint without any parameters.
-        query_string url_params; ///< The parameters associated with the request. (everything after the `?` in the URL)
-        ci_map headers;
-        std::string body;
-        std::string remote_ip_address; ///< The IP address from which the request was sent.
-        unsigned char http_ver_major, http_ver_minor;
-        bool keep_alive,    ///< Whether or not the server should send a `connection: Keep-Alive` header to the client.
-          close_connection, ///< Whether or not the server should shut down the TCP connection once a response is sent.
-          upgrade;          ///< Whether or noth the server should change the HTTP connection to a different connection.
-
-        void* middleware_context{};
-        void* middleware_container{};
-        asio::io_context* io_context{};
-
-        /// Construct an empty request. (sets the method to `GET`)
-        request():
-          method(HTTPMethod::Get)
-        {}
-
-        /// Construct a request with all values assigned.
-        request(HTTPMethod method_, std::string raw_url_, std::string url_, query_string url_params_, ci_map headers_, std::string body_, unsigned char http_major, unsigned char http_minor, bool has_keep_alive, bool has_close_connection, bool is_upgrade):
-          method(method_), raw_url(std::move(raw_url_)), url(std::move(url_)), url_params(std::move(url_params_)), headers(std::move(headers_)), body(std::move(body_)), http_ver_major(http_major), http_ver_minor(http_minor), keep_alive(has_keep_alive), close_connection(has_close_connection), upgrade(is_upgrade)
-        {}
-
-        void add_header(std::string key, std::string value)
-        {
-            headers.emplace(std::move(key), std::move(value));
-        }
-
-        const std::string& get_header_value(const std::string& key) const
-        {
-            return crow::get_header_value(headers, key);
-        }
-
-        bool check_version(unsigned char major, unsigned char minor) const
-        {
-            return http_ver_major == major && http_ver_minor == minor;
-        }
-
-        /// Get the body as parameters in QS format.
-
-        ///
-        /// This is meant to be used with requests of type "application/x-www-form-urlencoded"
-        const query_string get_body_params() const
-        {
-            return query_string(body, false);
-        }
-
-        /// Send data to whoever made this request with a completion handler and return immediately.
-        template<typename CompletionHandler>
-        void post(CompletionHandler handler)
-        {
-            asio::post(io_context, handler);
-        }
-
-        /// Send data to whoever made this request with a completion handler.
-        template<typename CompletionHandler>
-        void dispatch(CompletionHandler handler)
-        {
-            asio::dispatch(io_context, handler);
-        }
-    };
-} // namespace crow
-
-
-#include <string>
-#include <unordered_map>
-#include <algorithm>
-
-
-namespace crow
-{
-    /// A wrapper for `nodejs/http-parser`.
-
-    ///
-    /// Used to generate a \ref crow.request from the TCP socket buffer.
-    template<typename Handler>
-    struct HTTPParser : public http_parser
-    {
-        static int on_message_begin(http_parser*)
-        {
-            return 0;
-        }
-        static int on_method(http_parser* self_)
-        {
-            HTTPParser* self = static_cast<HTTPParser*>(self_);
-            self->req.method = static_cast<HTTPMethod>(self->method);
-
-            return 0;
-        }
-        static int on_url(http_parser* self_, const char* at, size_t length)
-        {
-            HTTPParser* self = static_cast<HTTPParser*>(self_);
-            self->req.raw_url.insert(self->req.raw_url.end(), at, at + length);
-            self->req.url_params = query_string(self->req.raw_url);
-            self->req.url = self->req.raw_url.substr(0, self->qs_point != 0 ? self->qs_point : std::string::npos);
-
-            self->process_url();
-
-            return 0;
-        }
-        static int on_header_field(http_parser* self_, const char* at, size_t length)
-        {
-            HTTPParser* self = static_cast<HTTPParser*>(self_);
-            switch (self->header_building_state)
-            {
-                case 0:
-                    if (!self->header_value.empty())
-                    {
-                        self->req.headers.emplace(std::move(self->header_field), std::move(self->header_value));
-                    }
-                    self->header_field.assign(at, at + length);
-                    self->header_building_state = 1;
-                    break;
-                case 1:
-                    self->header_field.insert(self->header_field.end(), at, at + length);
-                    break;
-            }
-            return 0;
-        }
-        static int on_header_value(http_parser* self_, const char* at, size_t length)
-        {
-            HTTPParser* self = static_cast<HTTPParser*>(self_);
-            switch (self->header_building_state)
-            {
-                case 0:
-                    self->header_value.insert(self->header_value.end(), at, at + length);
-                    break;
-                case 1:
-                    self->header_building_state = 0;
-                    self->header_value.assign(at, at + length);
-                    break;
-            }
-            return 0;
-        }
-        static int on_headers_complete(http_parser* self_)
-        {
-            HTTPParser* self = static_cast<HTTPParser*>(self_);
-            if (!self->header_field.empty())
-            {
-                self->req.headers.emplace(std::move(self->header_field), std::move(self->header_value));
-            }
-
-            self->set_connection_parameters();
-
-            self->process_header();
-            return 0;
-        }
-        static int on_body(http_parser* self_, const char* at, size_t length)
-        {
-            HTTPParser* self = static_cast<HTTPParser*>(self_);
-            self->req.body.insert(self->req.body.end(), at, at + length);
-            return 0;
-        }
-        static int on_message_complete(http_parser* self_)
-        {
-            HTTPParser* self = static_cast<HTTPParser*>(self_);
-
-            self->message_complete = true;
-            self->process_message();
-            return 0;
-        }
-        HTTPParser(Handler* handler):
-          http_parser(),
-          handler_(handler)
-        {
-            http_parser_init(this);
-        }
-
-        // return false on error
-        /// Parse a buffer into the different sections of an HTTP request.
-        bool feed(const char* buffer, int length)
-        {
-            if (message_complete)
-                return true;
-
-            const static http_parser_settings settings_{
-              on_message_begin,
-              on_method,
-              on_url,
-              on_header_field,
-              on_header_value,
-              on_headers_complete,
-              on_body,
-              on_message_complete,
-            };
-
-            int nparsed = http_parser_execute(this, &settings_, buffer, length);
-            if (http_errno != CHPE_OK)
-            {
-                return false;
-            }
-            return nparsed == length;
-        }
-
-        bool done()
-        {
-            return feed(nullptr, 0);
-        }
-
-        void clear()
-        {
-            req = crow::request();
-            header_field.clear();
-            header_value.clear();
-            header_building_state = 0;
-            qs_point = 0;
-            message_complete = false;
-            state = CROW_NEW_MESSAGE();
-        }
-
-        inline void process_url()
-        {
-            handler_->handle_url();
-        }
-
-        inline void process_header()
-        {
-            handler_->handle_header();
-        }
-
-        inline void process_message()
-        {
-            handler_->handle();
-        }
-
-        inline void set_connection_parameters()
-        {
-            req.http_ver_major = http_major;
-            req.http_ver_minor = http_minor;
-
-            //NOTE(EDev): it seems that the problem is with crow's policy on closing the connection for HTTP_VERSION < 1.0, the behaviour for that in crow is "don't close the connection, but don't send a keep-alive either"
-
-            // HTTP1.1 = always send keep_alive, HTTP1.0 = only send if header exists, HTTP?.? = never send
-            req.keep_alive = (http_major == 1 && http_minor == 0) ?
-                               ((flags & F_CONNECTION_KEEP_ALIVE) ? true : false) :
-                               ((http_major == 1 && http_minor == 1) ? true : false);
-
-            // HTTP1.1 = only close if close header exists, HTTP1.0 = always close unless keep_alive header exists, HTTP?.?= never close
-            req.close_connection = (http_major == 1 && http_minor == 0) ?
-                                     ((flags & F_CONNECTION_KEEP_ALIVE) ? false : true) :
-                                     ((http_major == 1 && http_minor == 1) ? ((flags & F_CONNECTION_CLOSE) ? true : false) : false);
-            req.upgrade = static_cast<bool>(upgrade);
-        }
-
-        /// The final request that this parser outputs.
-        ///
-        /// Data parsed is put directly into this object as soon as the related callback returns. (e.g. the request will have the cooorect method as soon as on_method() returns)
-        request req;
-
-    private:
-        int header_building_state = 0;
-        bool message_complete = false;
-        std::string header_field;
-        std::string header_value;
-
-        Handler* handler_; ///< This is currently an HTTP connection object (\ref crow.Connection).
-    };
-} // namespace crow
-
-#undef CROW_NEW_MESSAGE
-#undef CROW_start_state
-
-/**
- * \file crow/mustache.h
- * \brief This file includes the definition of the crow::mustache
- * namespace and its members.
- */
-
-#include <string>
-#include <vector>
-#include <fstream>
-#include <iterator>
-#include <functional>
-
-namespace crow // NOTE: Already documented in "crow/app.h"
-{
-    /**
-     * \namespace crow::mustache
-     * \brief In this namespace is defined most of the functions and
-     * classes related to template rendering.
-     *
-     * If you are here you might want to read these functions and
-     * classes:
-     *
-     * - \ref template_t
-     * - \ref load_text
-     * - \ref load_text_unsafe
-     * - \ref load
-     * - \ref load_unsafe
-     *
-     * As name suggest, crow uses [mustache](https://en.wikipedia.org/wiki/Mustache_(template_system))
-     * as main template rendering system.
-     *
-     * You may be interested in taking a look at the [Templating guide
-     * page](https://crowcpp.org/master/guides/templating/).
-     */
-    namespace mustache
-    {
-        using context = json::wvalue;
-
-        template_t load(const std::string& filename);
-
-        /**
-         * \class invalid_template_exception
-         * \brief Represents compilation error of an template. Throwed
-         * specially at mustache compile time.
-         */
-        class invalid_template_exception : public std::exception
-        {
-        public:
-            invalid_template_exception(const std::string& msg_):
-              msg("crow::mustache error: " + msg_)
-            {}
-            virtual const char* what() const throw() override
-            {
-                return msg.c_str();
-            }
-            std::string msg;
-        };
-
-        /**
-         * \struct rendered_template
-         * \brief Returned object after call the
-         * \ref template_t::render() method. Its intended to be
-         * returned during a **rule declaration**.
-         *
-         * \see \ref CROW_ROUTE
-         * \see \ref CROW_BP_ROUTE
-         */
-        struct rendered_template : returnable
-        {
-            rendered_template():
-              returnable("text/html") {}
-
-            rendered_template(std::string& body):
-              returnable("text/html"), body_(std::move(body)) {}
-
-            std::string body_;
-
-            std::string dump() const override
-            {
-                return body_;
-            }
-        };
-
-        /**
-         * \enum ActionType
-         * \brief Used in \ref Action to represent different parsing
-         * behaviors.
-         *
-         * \see \ref Action
-         */
-        enum class ActionType
-        {
-            Ignore,
-            Tag,
-            UnescapeTag,
-            OpenBlock,
-            CloseBlock,
-            ElseBlock,
-            Partial,
-        };
-
-        /**
-         * \struct Action
-         * \brief Used during mustache template compilation to
-         * represent parsing actions.
-         *
-         * \see \ref compile
-         * \see \ref template_t
-         */
-        struct Action
-        {
-            bool has_end_match;
-            char tag_char;
-            int start;
-            int end;
-            int pos;
-            ActionType t;
-
-            Action(char tag_char_, ActionType t_, size_t start_, size_t end_, size_t pos_ = 0):
-              has_end_match(false), tag_char(tag_char_), start(static_cast<int>(start_)), end(static_cast<int>(end_)), pos(static_cast<int>(pos_)), t(t_)
-            {
-            }
-
-            bool missing_end_pair() const {
-                switch (t)
-                {
-                    case ActionType::Ignore:
-                    case ActionType::Tag:
-                    case ActionType::UnescapeTag:
-                    case ActionType::CloseBlock:
-                    case ActionType::Partial:
-                        return false;
-
-                    // requires a match
-                    case ActionType::OpenBlock:
-                    case ActionType::ElseBlock:
-                        return !has_end_match;
-
-                    default:
-                        throw std::logic_error("invalid type");
-                }
-            }
-        };
-
-        /**
-         * \class template_t
-         * \brief Compiled mustache template object.
-         *
-         * \warning Use \ref compile instead.
-         */
-        class template_t
-        {
-        public:
-            template_t(std::string body):
-              body_(std::move(body))
-            {
-                // {{ {{# {{/ {{^ {{! {{> {{=
-                parse();
-            }
-
-        private:
-            std::string tag_name(const Action& action) const
-            {
-                return body_.substr(action.start, action.end - action.start);
-            }
-            auto find_context(const std::string& name, const std::vector<const context*>& stack, bool shouldUseOnlyFirstStackValue = false) const -> std::pair<bool, const context&>
-            {
-                if (name == ".")
-                {
-                    return {true, *stack.back()};
-                }
-                static json::wvalue empty_str;
-                empty_str = "";
-
-                int dotPosition = name.find(".");
-                if (dotPosition == static_cast<int>(name.npos))
-                {
-                    for (auto it = stack.rbegin(); it != stack.rend(); ++it)
-                    {
-                        if ((*it)->t() == json::type::Object)
-                        {
-                            if ((*it)->count(name))
-                                return {true, (**it)[name]};
-                        }
-                    }
-                }
-                else
-                {
-                    std::vector<int> dotPositions;
-                    dotPositions.push_back(-1);
-                    while (dotPosition != static_cast<int>(name.npos))
-                    {
-                        dotPositions.push_back(dotPosition);
-                        dotPosition = name.find(".", dotPosition + 1);
-                    }
-                    dotPositions.push_back(name.size());
-                    std::vector<std::string> names;
-                    names.reserve(dotPositions.size() - 1);
-                    for (int i = 1; i < static_cast<int>(dotPositions.size()); i++)
-                        names.emplace_back(name.substr(dotPositions[i - 1] + 1, dotPositions[i] - dotPositions[i - 1] - 1));
-
-                    for (auto it = stack.rbegin(); it != stack.rend(); ++it)
-                    {
-                        const context* view = *it;
-                        bool found = true;
-                        for (auto jt = names.begin(); jt != names.end(); ++jt)
-                        {
-                            if (view->t() == json::type::Object &&
-                                view->count(*jt))
-                            {
-                                view = &(*view)[*jt];
-                            }
-                            else
-                            {
-                                if (shouldUseOnlyFirstStackValue)
-                                {
-                                    return {false, empty_str};
-                                }
-                                found = false;
-                                break;
-                            }
-                        }
-                        if (found)
-                            return {true, *view};
-                    }
-                }
-
-                return {false, empty_str};
-            }
-
-            void escape(const std::string& in, std::string& out) const
-            {
-                out.reserve(out.size() + in.size());
-                for (auto it = in.begin(); it != in.end(); ++it)
-                {
-                    switch (*it)
-                    {
-                        case '&': out += "&amp;"; break;
-                        case '<': out += "&lt;"; break;
-                        case '>': out += "&gt;"; break;
-                        case '"': out += "&quot;"; break;
-                        case '\'': out += "&#39;"; break;
-                        case '/': out += "&#x2F;"; break;
-                        case '`': out += "&#x60;"; break;
-                        case '=': out += "&#x3D;"; break;
-                        default: out += *it; break;
-                    }
-                }
-            }
-
-            bool isTagInsideObjectBlock(const int& current, const std::vector<const context*>& stack) const
-            {
-                int openedBlock = 0;
-                for (int i = current; i > 0; --i)
-                {
-                    auto& action = actions_[i - 1];
-
-                    if (action.t == ActionType::OpenBlock)
-                    {
-                        if (openedBlock == 0 && (*stack.rbegin())->t() == json::type::Object)
-                        {
-                            return true;
-                        }
-                        --openedBlock;
-                    }
-                    else if (action.t == ActionType::CloseBlock)
-                    {
-                        ++openedBlock;
-                    }
-                }
-
-                return false;
-            }
-
-            void render_internal(int actionBegin, int actionEnd, std::vector<const context*>& stack, std::string& out, int indent) const
-            {
-                int current = actionBegin;
-
-                if (indent)
-                    out.insert(out.size(), indent, ' ');
-
-                while (current < actionEnd)
-                {
-                    auto& fragment = fragments_[current];
-                    auto& action = actions_[current];
-                    render_fragment(fragment, indent, out);
-                    switch (action.t)
-                    {
-                        case ActionType::Ignore:
-                            // do nothing
-                            break;
-                        case ActionType::Partial:
-                        {
-                            std::string partial_name = tag_name(action);
-                            auto partial_templ = load(partial_name);
-                            int partial_indent = action.pos;
-                            partial_templ.render_internal(0, partial_templ.fragments_.size() - 1, stack, out, partial_indent ? indent + partial_indent : 0);
-                        }
-                        break;
-                        case ActionType::UnescapeTag:
-                        case ActionType::Tag:
-                        {
-                            bool shouldUseOnlyFirstStackValue = false;
-                            if (isTagInsideObjectBlock(current, stack))
-                            {
-                                shouldUseOnlyFirstStackValue = true;
-                            }
-                            auto optional_ctx = find_context(tag_name(action), stack, shouldUseOnlyFirstStackValue);
-                            auto& ctx = optional_ctx.second;
-                            switch (ctx.t())
-                            {
-                                case json::type::False:
-                                case json::type::True:
-                                case json::type::Number:
-                                    out += ctx.dump();
-                                    break;
-                                case json::type::String:
-                                    if (action.t == ActionType::Tag)
-                                        escape(ctx.s, out);
-                                    else
-                                        out += ctx.s;
-                                    break;
-                                case json::type::Function:
-                                {
-                                    std::string execute_result = ctx.execute();
-                                    while (execute_result.find("{{") != std::string::npos)
-                                    {
-                                        template_t result_plug(execute_result);
-                                        execute_result = result_plug.render_string(*(stack[0]));
-                                    }
-
-                                    if (action.t == ActionType::Tag)
-                                        escape(execute_result, out);
-                                    else
-                                        out += execute_result;
-                                }
-                                break;
-                                default:
-                                    throw std::runtime_error("not implemented tag type" + utility::lexical_cast<std::string>(static_cast<int>(ctx.t())));
-                            }
-                        }
-                        break;
-                        case ActionType::ElseBlock:
-                        {
-                            static context nullContext;
-                            auto optional_ctx = find_context(tag_name(action), stack);
-                            if (!optional_ctx.first)
-                            {
-                                stack.emplace_back(&nullContext);
-                                break;
-                            }
-
-                            auto& ctx = optional_ctx.second;
-                            switch (ctx.t())
-                            {
-                                case json::type::List:
-                                    if (ctx.l && !ctx.l->empty())
-                                        current = action.pos;
-                                    else
-                                        stack.emplace_back(&nullContext);
-                                    break;
-                                case json::type::False:
-                                case json::type::Null:
-                                    stack.emplace_back(&nullContext);
-                                    break;
-                                default:
-                                    current = action.pos;
-                                    break;
-                            }
-                            break;
-                        }
-                        case ActionType::OpenBlock:
-                        {
-                            auto optional_ctx = find_context(tag_name(action), stack);
-                            if (!optional_ctx.first)
-                            {
-                                current = action.pos;
-                                break;
-                            }
-
-                            auto& ctx = optional_ctx.second;
-                            switch (ctx.t())
-                            {
-                                case json::type::List:
-                                    if (ctx.l)
-                                        for (auto it = ctx.l->begin(); it != ctx.l->end(); ++it)
-                                        {
-                                            stack.push_back(&*it);
-                                            render_internal(current + 1, action.pos, stack, out, indent);
-                                            stack.pop_back();
-                                        }
-                                    current = action.pos;
-                                    break;
-                                case json::type::Number:
-                                case json::type::String:
-                                case json::type::Object:
-                                case json::type::True:
-                                    stack.push_back(&ctx);
-                                    break;
-                                case json::type::False:
-                                case json::type::Null:
-                                    current = action.pos;
-                                    break;
-                                default:
-                                    throw std::runtime_error("{{#: not implemented context type: " + utility::lexical_cast<std::string>(static_cast<int>(ctx.t())));
-                                    break;
-                            }
-                            break;
-                        }
-                        case ActionType::CloseBlock:
-                            stack.pop_back();
-                            break;
-                        default:
-                            throw std::runtime_error("not implemented " + utility::lexical_cast<std::string>(static_cast<int>(action.t)));
-                    }
-                    current++;
-                }
-                auto& fragment = fragments_[actionEnd];
-                render_fragment(fragment, indent, out);
-            }
-            void render_fragment(const std::pair<int, int> fragment, int indent, std::string& out) const
-            {
-                if (indent)
-                {
-                    for (int i = fragment.first; i < fragment.second; i++)
-                    {
-                        out += body_[i];
-                        if (body_[i] == '\n' && i + 1 != static_cast<int>(body_.size()))
-                            out.insert(out.size(), indent, ' ');
-                    }
-                }
-                else
-                    out.insert(out.size(), body_, fragment.first, fragment.second - fragment.first);
-            }
-
-        public:
-            /// Output a returnable template from this mustache template
-            rendered_template render() const
-            {
-                context empty_ctx;
-                std::vector<const context*> stack;
-                stack.emplace_back(&empty_ctx);
-
-                std::string ret;
-                render_internal(0, fragments_.size() - 1, stack, ret, 0);
-                return rendered_template(ret);
-            }
-
-            /// Apply the values from the context provided and output a returnable template from this mustache template
-            rendered_template render(const context& ctx) const
-            {
-                std::vector<const context*> stack;
-                stack.emplace_back(&ctx);
-
-                std::string ret;
-                render_internal(0, fragments_.size() - 1, stack, ret, 0);
-                return rendered_template(ret);
-            }
-
-            /// Apply the values from the context provided and output a returnable template from this mustache template
-            rendered_template render(const context&& ctx) const
-            {
-                return render(ctx);
-            }
-
-            /// Output a returnable template from this mustache template
-            std::string render_string() const
-            {
-                context empty_ctx;
-                std::vector<const context*> stack;
-                stack.emplace_back(&empty_ctx);
-
-                std::string ret;
-                render_internal(0, fragments_.size() - 1, stack, ret, 0);
-                return ret;
-            }
-
-            /// Apply the values from the context provided and output a returnable template from this mustache template
-            std::string render_string(const context& ctx) const
-            {
-                std::vector<const context*> stack;
-                stack.emplace_back(&ctx);
-
-                std::string ret;
-                render_internal(0, fragments_.size() - 1, stack, ret, 0);
-                return ret;
-            }
-
-        private:
-            void parse()
-            {
-                std::string tag_open = "{{";
-                std::string tag_close = "}}";
-
-                std::vector<int> blockPositions;
-
-                size_t current = 0;
-                while (1)
-                {
-                    size_t idx = body_.find(tag_open, current);
-                    if (idx == body_.npos)
-                    {
-                        fragments_.emplace_back(static_cast<int>(current), static_cast<int>(body_.size()));
-                        actions_.emplace_back('!', ActionType::Ignore, 0, 0);
-                        break;
-                    }
-                    fragments_.emplace_back(static_cast<int>(current), static_cast<int>(idx));
-
-                    idx += tag_open.size();
-                    size_t endIdx = body_.find(tag_close, idx);
-                    if (endIdx == idx)
-                    {
-                        throw invalid_template_exception("empty tag is not allowed");
-                    }
-                    if (endIdx == body_.npos)
-                    {
-                        // error, no matching tag
-                        throw invalid_template_exception("not matched opening tag");
-                    }
-                    current = endIdx + tag_close.size();
-                    char tag_char = body_[idx];
-                    switch (tag_char)
-                    {
-                        case '#':
-                            idx++;
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx - 1] == ' ')
-                                endIdx--;
-                            blockPositions.emplace_back(static_cast<int>(actions_.size()));
-                            actions_.emplace_back(tag_char, ActionType::OpenBlock, idx, endIdx);
-                            break;
-                        case '/':
-                            idx++;
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx - 1] == ' ')
-                                endIdx--;
-                            {
-                                if (blockPositions.empty())
-                                {
-                                    throw invalid_template_exception(
-                                             std::string("unexpected closing tag: ")
-                                             + body_.substr(idx, endIdx - idx)
-                                             );
-                                }
-                                auto& matched = actions_[blockPositions.back()];
-                                if (body_.compare(idx, endIdx - idx,
-                                                  body_, matched.start, matched.end - matched.start) != 0)
-                                {
-                                     throw invalid_template_exception(
-                                             std::string("not matched {{")
-                                             + matched.tag_char
-                                             + "{{/ pair: "
-                                             + body_.substr(matched.start, matched.end - matched.start) + ", "
-                                             + body_.substr(idx, endIdx - idx)
-                                             );
-                                }
-                                matched.pos = static_cast<int>(actions_.size());
-                                matched.has_end_match = true;
-                            }
-                            actions_.emplace_back(tag_char, ActionType::CloseBlock, idx, endIdx, blockPositions.back());
-                            blockPositions.pop_back();
-                            break;
-                        case '^':
-                            idx++;
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx - 1] == ' ')
-                                endIdx--;
-                            blockPositions.emplace_back(static_cast<int>(actions_.size()));
-                            actions_.emplace_back(tag_char, ActionType::ElseBlock, idx, endIdx);
-                            break;
-                        case '!':
-                            // do nothing action
-                            actions_.emplace_back(tag_char, ActionType::Ignore, idx + 1, endIdx);
-                            break;
-                        case '>': // partial
-                            idx++;
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx - 1] == ' ')
-                                endIdx--;
-                            actions_.emplace_back(tag_char, ActionType::Partial, idx, endIdx);
-                            break;
-                        case '{':
-                            if (tag_open != "{{" || tag_close != "}}")
-                                throw invalid_template_exception("cannot use triple mustache when delimiter changed");
-
-                            idx++;
-                            if (body_[endIdx + 2] != '}')
-                            {
-                                throw invalid_template_exception("{{{: }}} not matched");
-                            }
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx - 1] == ' ')
-                                endIdx--;
-                            actions_.emplace_back(tag_char, ActionType::UnescapeTag, idx, endIdx);
-                            current++;
-                            break;
-                        case '&':
-                            idx++;
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx - 1] == ' ')
-                                endIdx--;
-                            actions_.emplace_back(tag_char, ActionType::UnescapeTag, idx, endIdx);
-                            break;
-                        case '=':
-                            // tag itself is no-op
-                            idx++;
-                            actions_.emplace_back(tag_char, ActionType::Ignore, idx, endIdx);
-                            endIdx--;
-                            if (body_[endIdx] != '=')
-                                throw invalid_template_exception("{{=: not matching = tag: " + body_.substr(idx, endIdx - idx));
-                            endIdx--;
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx] == ' ')
-                                endIdx--;
-                            endIdx++;
-                            {
-                                bool succeeded = false;
-                                for (size_t i = idx; i < endIdx; i++)
-                                {
-                                    if (body_[i] == ' ')
-                                    {
-                                        tag_open = body_.substr(idx, i - idx);
-                                        while (body_[i] == ' ')
-                                            i++;
-                                        tag_close = body_.substr(i, endIdx - i);
-                                        if (tag_open.empty())
-                                            throw invalid_template_exception("{{=: empty open tag");
-                                        if (tag_close.empty())
-                                            throw invalid_template_exception("{{=: empty close tag");
-
-                                        if (tag_close.find(" ") != tag_close.npos)
-                                            throw invalid_template_exception("{{=: invalid open/close tag: " + tag_open + " " + tag_close);
-                                        succeeded = true;
-                                        break;
-                                    }
-                                }
-                                if (!succeeded)
-                                    throw invalid_template_exception("{{=: cannot find space between new open/close tags");
-                            }
-                            break;
-                        default:
-                            // normal tag case;
-                            while (body_[idx] == ' ')
-                                idx++;
-                            while (body_[endIdx - 1] == ' ')
-                                endIdx--;
-                            actions_.emplace_back(tag_char, ActionType::Tag, idx, endIdx);
-                            break;
-                    }
-                }
-
-                // ensure no unmatched tags
-                for (int i = 0; i < static_cast<int>(actions_.size()); i++)
-                {
-                    if (actions_[i].missing_end_pair())
-                    {
-                        throw invalid_template_exception(
-                                std::string("open tag has no matching end tag {{")
-                                + actions_[i].tag_char
-                                + " {{/ pair: "
-                                + body_.substr(actions_[i].start, actions_[i].end - actions_[i].start)
-                                );
-                    }
-                }
-
-                // removing standalones
-                for (int i = static_cast<int>(actions_.size()) - 2; i >= 0; i--)
-                {
-                    if (actions_[i].t == ActionType::Tag || actions_[i].t == ActionType::UnescapeTag)
-                        continue;
-                    auto& fragment_before = fragments_[i];
-                    auto& fragment_after = fragments_[i + 1];
-                    bool is_last_action = i == static_cast<int>(actions_.size()) - 2;
-                    bool all_space_before = true;
-                    int j, k;
-                    for (j = fragment_before.second - 1; j >= fragment_before.first; j--)
-                    {
-                        if (body_[j] != ' ')
-                        {
-                            all_space_before = false;
-                            break;
-                        }
-                    }
-                    if (all_space_before && i > 0)
-                        continue;
-                    if (!all_space_before && body_[j] != '\n')
-                        continue;
-                    bool all_space_after = true;
-                    for (k = fragment_after.first; k < static_cast<int>(body_.size()) && k < fragment_after.second; k++)
-                    {
-                        if (body_[k] != ' ')
-                        {
-                            all_space_after = false;
-                            break;
-                        }
-                    }
-                    if (all_space_after && !is_last_action)
-                        continue;
-                    if (!all_space_after &&
-                        !(
-                          body_[k] == '\n' ||
-                          (body_[k] == '\r' &&
-                           k + 1 < static_cast<int>(body_.size()) &&
-                           body_[k + 1] == '\n')))
-                        continue;
-                    if (actions_[i].t == ActionType::Partial)
-                    {
-                        actions_[i].pos = fragment_before.second - j - 1;
-                    }
-                    fragment_before.second = j + 1;
-                    if (!all_space_after)
-                    {
-                        if (body_[k] == '\n')
-                            k++;
-                        else
-                            k += 2;
-                        fragment_after.first = k;
-                    }
-                }
-            }
-
-            std::vector<std::pair<int, int>> fragments_;
-            std::vector<Action> actions_;
-            std::string body_;
-        };
-
-        /// \brief The function that compiles a source into a mustache
-        /// template.
-        inline template_t compile(const std::string& body)
-        {
-            return template_t(body);
-        }
-
-        namespace detail
-        {
-            inline std::string& get_template_base_directory_ref()
-            {
-                static std::string template_base_directory = "templates";
-                return template_base_directory;
-            }
-
-            /// A base directory not related to any blueprint
-            inline std::string& get_global_template_base_directory_ref()
-            {
-                static std::string template_base_directory = "templates";
-                return template_base_directory;
-            }
-        } // namespace detail
-
-        /// \brief The default way that \ref load, \ref load_unsafe,
-        /// \ref load_text and \ref load_text_unsafe use to read the
-        /// contents of a file.
-        inline std::string default_loader(const std::string& filename)
-        {
-            std::string path = detail::get_template_base_directory_ref();
-            std::ifstream inf(utility::join_path(path, filename));
-            if (!inf)
-            {
-                CROW_LOG_WARNING << "Template \"" << filename << "\" not found.";
-                return {};
-            }
-            return {std::istreambuf_iterator<char>(inf), std::istreambuf_iterator<char>()};
-        }
-
-        namespace detail
-        {
-            inline std::function<std::string(std::string)>& get_loader_ref()
-            {
-                static std::function<std::string(std::string)> loader = default_loader;
-                return loader;
-            }
-        } // namespace detail
-
-        /// \brief Defines the templates directory path at **route
-        /// level**. By default is `templates/`.
-        inline void set_base(const std::string& path)
-        {
-            auto& base = detail::get_template_base_directory_ref();
-            base = path;
-            if (base.back() != '\\' &&
-                base.back() != '/')
-            {
-                base += '/';
-            }
-        }
-
-        /// \brief Defines the templates directory path at **global
-        /// level**. By default is `templates/`.
-        inline void set_global_base(const std::string& path)
-        {
-            auto& base = detail::get_global_template_base_directory_ref();
-            base = path;
-            if (base.back() != '\\' &&
-                base.back() != '/')
-            {
-                base += '/';
-            }
-        }
-
-        /// \brief Change the way that \ref load, \ref load_unsafe,
-        /// \ref load_text and \ref load_text_unsafe reads a file.
-        ///
-        /// By default, the previously mentioned functions load files
-        /// using \ref default_loader, that only reads a file and
-        /// returns a std::string.
-        inline void set_loader(std::function<std::string(std::string)> loader)
-        {
-            detail::get_loader_ref() = std::move(loader);
-        }
-
-        /// \brief Open, read and sanitize a file but returns a
-        /// std::string without a previous rendering process.
-        ///
-        /// Except for the **sanitize process** this function does the
-        /// almost the same thing that \ref load_text_unsafe.
-        inline std::string load_text(const std::string& filename)
-        {
-            std::string filename_sanitized(filename);
-            utility::sanitize_filename(filename_sanitized);
-            return detail::get_loader_ref()(filename_sanitized);
-        }
-
-        /// \brief Open and read a file but returns a std::string
-        /// without a previous rendering process.
-        ///
-        /// This function is more like a helper to reduce code like
-        /// this...
-        ///
-        /// ```cpp
-        /// std::ifstream file("home.html");
-        /// return std::string({std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()});
-        /// ```
-        ///
-        /// ... Into this...
-        ///
-        /// ```cpp
-        /// return load("home.html");
-        /// ```
-        ///
-        /// \warning Usually \ref load_text is more recommended to use
-        /// instead because it may prevent some [XSS Attacks](https://en.wikipedia.org/wiki/Cross-site_scripting).
-        /// **Never blindly trust your users!**
-        inline std::string load_text_unsafe(const std::string& filename)
-        {
-            return detail::get_loader_ref()(filename);
-        }
-
-        /// \brief Open, read and renders a file using a mustache
-        /// compiler. It also sanitize the input before compilation.
-        inline template_t load(const std::string& filename)
-        {
-            std::string filename_sanitized(filename);
-            utility::sanitize_filename(filename_sanitized);
-            return compile(detail::get_loader_ref()(filename_sanitized));
-        }
-
-        /// \brief Open, read and renders a file using a mustache
-        /// compiler. But it **do not** sanitize the input before
-        /// compilation.
-        ///
-        /// \warning Usually \ref load is more recommended to use
-        /// instead because it may prevent some [XSS Attacks](https://en.wikipedia.org/wiki/Cross-site_scripting).
-        /// **Never blindly trust your users!**
-        inline template_t load_unsafe(const std::string& filename)
-        {
-            return compile(detail::get_loader_ref()(filename));
-        }
-    } // namespace mustache
-} // namespace crow
-
-#include <stdexcept>
-
-namespace crow
-{
-    struct bad_request : public std::runtime_error
-    {
-        bad_request(const std::string& what_arg)
-            : std::runtime_error(what_arg) {}
-
-        bad_request(const char* what_arg)
-            : std::runtime_error(what_arg) {}
-    };
-}
-
-#include <string>
-#include <vector>
-#include <sstream>
-
-
-namespace crow
-{
-
-    /// Encapsulates anything related to processing and organizing `multipart/xyz` messages
-    namespace multipart
-    {
-
-        const std::string dd = "--";
-
-        /// The first part in a section, contains metadata about the part
-        struct header
-        {
-            std::string value;                                   ///< The first part of the header, usually `Content-Type` or `Content-Disposition`
-            std::unordered_map<std::string, std::string> params; ///< The parameters of the header, come after the `value`
-
-            operator int() const { return std::stoi(value); }    ///< Returns \ref value as integer
-            operator double() const { return std::stod(value); } ///< Returns \ref value as double
-        };
-
-        /// Multipart header map (key is header key).
-        using mph_map = std::unordered_multimap<std::string, header, ci_hash, ci_key_eq>;
-
-        /// Find and return the value object associated with the key. (returns an empty class if nothing is found)
-        template<typename O, typename T>
-        inline const O& get_header_value_object(const T& headers, const std::string& key)
-        {
-            if (headers.count(key))
-            {
-                return headers.find(key)->second;
-            }
-            static O empty;
-            return empty;
-        }
-
-        /// Same as \ref get_header_value_object() but for \ref multipart.header
-        template<typename T>
-        inline const header& get_header_object(const T& headers, const std::string& key)
-        {
-            return get_header_value_object<header>(headers, key);
-        }
-
-        ///One part of the multipart message
-
-        ///
-        /// It is usually separated from other sections by a `boundary`
-        struct part
-        {
-            mph_map headers;  ///< (optional) The first part before the data, Contains information regarding the type of data and encoding
-            std::string body; ///< The actual data in the part
-
-            operator int() const { return std::stoi(body); }    ///< Returns \ref body as integer
-            operator double() const { return std::stod(body); } ///< Returns \ref body as double
-
-            const header& get_header_object(const std::string& key) const
-            {
-                return multipart::get_header_object(headers, key);
-            }
-        };
-
-        /// Multipart map (key is the name parameter).
-        using mp_map = std::unordered_multimap<std::string, part, ci_hash, ci_key_eq>;
-
-        /// The parsed multipart request/response
-        struct message : public returnable
-        {
-            ci_map headers;          ///< The request/response headers
-            std::string boundary;    ///< The text boundary that separates different `parts`
-            std::vector<part> parts; ///< The individual parts of the message
-            mp_map part_map;         ///< The individual parts of the message, organized in a map with the `name` header parameter being the key
-
-            const std::string& get_header_value(const std::string& key) const
-            {
-                return crow::get_header_value(headers, key);
-            }
-
-            part get_part_by_name(const std::string& name)
-            {
-                mp_map::iterator result = part_map.find(name);
-                if (result != part_map.end())
-                    return result->second;
-                else
-                    return {};
-            }
-
-            /// Represent all parts as a string (**does not include message headers**)
-            std::string dump() const override
-            {
-                std::stringstream str;
-                std::string delimiter = dd + boundary;
-
-                for (unsigned i = 0; i < parts.size(); i++)
-                {
-                    str << delimiter << crlf;
-                    str << dump(i);
-                }
-                str << delimiter << dd << crlf;
-                return str.str();
-            }
-
-            /// Represent an individual part as a string
-            std::string dump(int part_) const
-            {
-                std::stringstream str;
-                part item = parts[part_];
-                for (auto& item_h : item.headers)
-                {
-                    str << item_h.first << ": " << item_h.second.value;
-                    for (auto& it : item_h.second.params)
-                    {
-                        str << "; " << it.first << '=' << pad(it.second);
-                    }
-                    str << crlf;
-                }
-                str << crlf;
-                str << item.body << crlf;
-                return str.str();
-            }
-
-            /// Default constructor using default values
-            message(const ci_map& headers_, const std::string& boundary_, const std::vector<part>& sections):
-              returnable("multipart/form-data; boundary=CROW-BOUNDARY"), headers(headers_), boundary(boundary_), parts(sections)
-            {
-                if (!boundary.empty())
-                    content_type = "multipart/form-data; boundary=" + boundary;
-                for (auto& item : parts)
-                {
-                    part_map.emplace(
-                      (get_header_object(item.headers, "Content-Disposition").params.find("name")->second),
-                      item);
-                }
-            }
-
-            /// Create a multipart message from a request data
-            explicit message(const request& req):
-              returnable("multipart/form-data; boundary=CROW-BOUNDARY"),
-              headers(req.headers),
-              boundary(get_boundary(get_header_value("Content-Type")))
-            {
-                if (!boundary.empty())
-                {
-                    content_type = "multipart/form-data; boundary=" + boundary;
-                    parse_body(req.body);
-                }
-                else
-                {
-                    throw bad_request("Empty boundary in multipart message");
-                }
-            }
-
-        private:
-            std::string get_boundary(const std::string& header) const
-            {
-                constexpr char boundary_text[] = "boundary=";
-                size_t found = header.find(boundary_text);
-                if (found != std::string::npos)
-                {
-                    std::string to_return(header.substr(found + strlen(boundary_text)));
-                    if (to_return[0] == '\"')
-                    {
-                        to_return = to_return.substr(1, to_return.length() - 2);
-                    }
-                    return to_return;
-                }
-                return std::string();
-            }
-
-            void parse_body(std::string body)
-            {
-                std::string delimiter = dd + boundary;
-
-                // TODO(EDev): Exit on error
-                while (body != (crlf))
-                {
-                    size_t found = body.find(delimiter);
-                    if (found == std::string::npos)
-                    {
-                        // did not find delimiter; probably an ill-formed body; throw to indicate the issue to user
-                        throw bad_request("Unable to find delimiter in multipart message. Probably ill-formed body");
-                    }
-                    std::string section = body.substr(0, found);
-
-                    // +2 is the CRLF.
-                    // We don't check it and delete it so that the same delimiter can be used for The last delimiter (--delimiter--CRLF).
-                    body.erase(0, found + delimiter.length() + 2);
-                    if (!section.empty())
-                    {
-                        part parsed_section(parse_section(section));
-                        part_map.emplace(
-                          (get_header_object(parsed_section.headers, "Content-Disposition").params.find("name")->second),
-                          parsed_section);
-                        parts.push_back(std::move(parsed_section));
-                    }
-                }
-            }
-
-            part parse_section(std::string& section)
-            {
-                struct part to_return;
-
-                size_t found = section.find(crlf + crlf);
-                std::string head_line = section.substr(0, found + 2);
-                section.erase(0, found + 4);
-
-                parse_section_head(head_line, to_return);
-                to_return.body = section.substr(0, section.length() - 2);
-                return to_return;
-            }
-
-            void parse_section_head(std::string& lines, part& part)
-            {
-                while (!lines.empty())
-                {
-                    header to_add;
-
-                    const size_t found_crlf = lines.find(crlf);
-                    std::string line = lines.substr(0, found_crlf);
-                    std::string key;
-                    lines.erase(0, found_crlf + 2);
-                    // Add the header if available
-                    if (!line.empty())
-                    {
-                        const size_t found_semicolon = line.find("; ");
-                        std::string header = line.substr(0, found_semicolon);
-                        if (found_semicolon != std::string::npos)
-                            line.erase(0, found_semicolon + 2);
-                        else
-                            line = std::string();
-
-                        size_t header_split = header.find(": ");
-                        key = header.substr(0, header_split);
-
-                        to_add.value = header.substr(header_split + 2);
-                    }
-
-                    // Add the parameters
-                    while (!line.empty())
-                    {
-                        const size_t found_semicolon = line.find("; ");
-                        std::string param = line.substr(0, found_semicolon);
-                        if (found_semicolon != std::string::npos)
-                            line.erase(0, found_semicolon + 2);
-                        else
-                            line = std::string();
-
-                        size_t param_split = param.find('=');
-
-                        std::string value = param.substr(param_split + 1);
-
-                        to_add.params.emplace(param.substr(0, param_split), trim(value));
-                    }
-                    part.headers.emplace(key, to_add);
-                }
-            }
-
-            inline std::string trim(std::string& string, const char& excess = '"') const
-            {
-                if (string.length() > 1 && string[0] == excess && string[string.length() - 1] == excess)
-                    return string.substr(1, string.length() - 2);
-                return string;
-            }
-
-            inline std::string pad(std::string& string, const char& padding = '"') const
-            {
-                return (padding + string + padding);
-            }
-        };
-    } // namespace multipart
-} // namespace crow
-
-
-#include <charconv>
-#include <string>
-#include <vector>
-#include <string_view>
-#include <sstream>
-
-// for crow::multipart::dd
-
-namespace crow
-{
-
-    /// Encapsulates anything related to processing and organizing `multipart/xyz` messages
-    namespace multipart
-    {
-        /// The first part in a section, contains metadata about the part
-        struct header_view
-        {
-            std::string_view value;                                        ///< The first part of the header, usually `Content-Type` or `Content-Disposition`
-            std::unordered_map<std::string_view, std::string_view> params; ///< The parameters of the header, come after the `value`
-
-            /// Returns \ref value as integer
-            operator int() const
-            {
-                int result = 0;
-                std::from_chars(value.data(), value.data() + value.size(), result);
-                return result;
-            }
-
-            /// Returns \ref value as double
-            operator double() const
-            {
-                // There's no std::from_chars for floating-point types in a lot of STLs
-                return std::stod(static_cast<std::string>(value));
-            }
-        };
-
-        /// Multipart header map (key is header key).
-        using mph_view_map = std::unordered_multimap<std::string_view, header_view, ci_hash, ci_key_eq>;
-
-        /// Finds and returns the header with the specified key. (returns an empty header if nothing is found)
-        inline const header_view& get_header_object(const mph_view_map& headers, const std::string_view key)
-        {
-            const auto header = headers.find(key);
-            if (header != headers.cend())
-            {
-                return header->second;
-            }
-
-            static header_view empty;
-            return empty;
-        }
-
-        /// String padded with the specified padding (double quotes by default)
-        struct padded
-        {
-            std::string_view value;   ///< String to pad
-            const char padding = '"'; ///< Padding to use
-
-            /// Outputs padded value to the stream
-            friend std::ostream& operator<<(std::ostream& stream, const padded value_)
-            {
-                return stream << value_.padding << value_.value << value_.padding;
-            }
-        };
-
-        ///One part of the multipart message
-
-        ///
-        /// It is usually separated from other sections by a `boundary`
-        struct part_view
-        {
-            mph_view_map headers;  ///< (optional) The first part before the data, Contains information regarding the type of data and encoding
-            std::string_view body; ///< The actual data in the part
-
-            /// Returns \ref body as integer
-            operator int() const
-            {
-                int result = 0;
-                std::from_chars(body.data(), body.data() + body.size(), result);
-                return result;
-            }
-
-            /// Returns \ref body as double
-            operator double() const
-            {
-                // There's no std::from_chars for floating-point types in a lot of STLs
-                return std::stod(static_cast<std::string>(body));
-            }
-
-            const header_view& get_header_object(const std::string_view key) const
-            {
-                return multipart::get_header_object(headers, key);
-            }
-
-            friend std::ostream& operator<<(std::ostream& stream, const part_view& part)
-            {
-                for (const auto& [header_key, header_value] : part.headers)
-                {
-                    stream << header_key << ": " << header_value.value;
-                    for (const auto& [param_key, param_value] : header_value.params)
-                    {
-                        stream << "; " << param_key << '=' << padded{param_value};
-                    }
-                    stream << crlf;
-                }
-                stream << crlf;
-                stream << part.body << crlf;
-                return stream;
-            }
-        };
-
-        /// Multipart map (key is the name parameter).
-        using mp_view_map = std::unordered_multimap<std::string_view, part_view, ci_hash, ci_key_eq>;
-
-        /// The parsed multipart request/response
-        struct message_view
-        {
-            std::reference_wrapper<const ci_map> headers; ///< The request/response headers
-            std::string boundary;                         ///< The text boundary that separates different `parts`
-            std::vector<part_view> parts;                 ///< The individual parts of the message
-            mp_view_map part_map;                         ///< The individual parts of the message, organized in a map with the `name` header parameter being the key
-
-            const std::string& get_header_value(const std::string& key) const
-            {
-                return crow::get_header_value(headers.get(), key);
-            }
-
-            part_view get_part_by_name(const std::string_view name)
-            {
-                mp_view_map::iterator result = part_map.find(name);
-                if (result != part_map.end())
-                    return result->second;
-                else
-                    return {};
-            }
-
-            friend std::ostream& operator<<(std::ostream& stream, const message_view message)
-            {
-                std::string delimiter = dd + message.boundary;
-
-                for (const part_view& part : message.parts)
-                {
-                    stream << delimiter << crlf;
-                    stream << part;
-                }
-                stream << delimiter << dd << crlf;
-
-                return stream;
-            }
-
-            /// Represent all parts as a string (**does not include message headers**)
-            std::string dump() const
-            {
-                std::ostringstream str;
-                str << *this;
-                return std::move(str).str();
-            }
-
-            /// Represent an individual part as a string
-            std::string dump(int part_) const
-            {
-                std::ostringstream str;
-                str << parts.at(part_);
-                return std::move(str).str();
-            }
-
-            /// Default constructor using default values
-            message_view(const ci_map& headers_, const std::string& boundary_, const std::vector<part_view>& sections):
-              headers(headers_), boundary(boundary_), parts(sections)
-            {
-                for (const part_view& item : parts)
-                {
-                    part_map.emplace(
-                      (get_header_object(item.headers, "Content-Disposition").params.find("name")->second),
-                      item);
-                }
-            }
-
-            /// Create a multipart message from a request data
-            explicit message_view(const request& req):
-              headers(req.headers),
-              boundary(get_boundary(get_header_value("Content-Type")))
-            {
-                parse_body(req.body);
-            }
-
-        private:
-            std::string_view get_boundary(const std::string_view header) const
-            {
-                constexpr std::string_view boundary_text = "boundary=";
-                const size_t found = header.find(boundary_text);
-                if (found == std::string_view::npos)
-                {
-                    return std::string_view();
-                }
-
-                const std::string_view to_return = header.substr(found + boundary_text.size());
-                if (to_return[0] == '\"')
-                {
-                    return to_return.substr(1, to_return.length() - 2);
-                }
-                return to_return;
-            }
-
-            void parse_body(std::string_view body)
-            {
-                const std::string delimiter = dd + boundary;
-
-                // TODO(EDev): Exit on error
-                while (body != (crlf))
-                {
-                    const size_t found = body.find(delimiter);
-                    if (found == std::string_view::npos)
-                    {
-                        // did not find delimiter; probably an ill-formed body; ignore the rest
-                        break;
-                    }
-
-                    const std::string_view section = body.substr(0, found);
-
-                    // +2 is the CRLF.
-                    // We don't check it and delete it so that the same delimiter can be used for The last delimiter (--delimiter--CRLF).
-                    body = body.substr(found + delimiter.length() + 2);
-                    if (!section.empty())
-                    {
-                        part_view parsed_section = parse_section(section);
-                        part_map.emplace(
-                          (get_header_object(parsed_section.headers, "Content-Disposition").params.find("name")->second),
-                          parsed_section);
-                        parts.push_back(std::move(parsed_section));
-                    }
-                }
-            }
-
-            part_view parse_section(std::string_view section)
-            {
-                constexpr static std::string_view crlf2 = "\r\n\r\n";
-
-                const size_t found = section.find(crlf2);
-                const std::string_view head_line = section.substr(0, found + 2);
-                section = section.substr(found + 4);
-
-                return part_view{
-                  parse_section_head(head_line),
-                  section.substr(0, section.length() - 2),
-                };
-            }
-
-            mph_view_map parse_section_head(std::string_view lines)
-            {
-                mph_view_map result;
-
-                while (!lines.empty())
-                {
-                    header_view to_add;
-
-                    const size_t found_crlf = lines.find(crlf);
-                    std::string_view line = lines.substr(0, found_crlf);
-                    std::string_view key;
-                    lines = lines.substr(found_crlf + 2);
-                    // Add the header if available
-                    if (!line.empty())
-                    {
-                        const size_t found_semicolon = line.find("; ");
-                        std::string_view header = line.substr(0, found_semicolon);
-                        if (found_semicolon != std::string_view::npos)
-                            line = line.substr(found_semicolon + 2);
-                        else
-                            line = std::string_view();
-
-                        const size_t header_split = header.find(": ");
-                        key = header.substr(0, header_split);
-
-                        to_add.value = header.substr(header_split + 2);
-                    }
-
-                    // Add the parameters
-                    while (!line.empty())
-                    {
-                        const size_t found_semicolon = line.find("; ");
-                        std::string_view param = line.substr(0, found_semicolon);
-                        if (found_semicolon != std::string_view::npos)
-                            line = line.substr(found_semicolon + 2);
-                        else
-                            line = std::string_view();
-
-                        const size_t param_split = param.find('=');
-
-                        const std::string_view value = param.substr(param_split + 1);
-
-                        to_add.params.emplace(param.substr(0, param_split), trim(value));
-                    }
-                    result.emplace(key, to_add);
-                }
-
-                return result;
-            }
-
-            inline std::string_view trim(const std::string_view string, const char excess = '"') const
-            {
-                if (string.length() > 1 && string[0] == excess && string[string.length() - 1] == excess)
-                    return string.substr(1, string.length() - 2);
-                return string;
-            }
-        };
-    } // namespace multipart
-} // namespace crow
-
 #include <string>
 #include <unordered_map>
 #include <ios>
@@ -9382,6 +8215,29 @@ namespace crow
     };
 } // namespace crow
 
+
+namespace crow
+{
+
+    struct UTF8
+    {
+        struct context
+        {};
+
+        void before_handle(request& /*req*/, response& /*res*/, context& /*ctx*/)
+        {}
+
+        void after_handle(request& /*req*/, response& res, context& /*ctx*/)
+        {
+            if (get_header_value(res.headers, "Content-Type").empty())
+            {
+                res.set_header("Content-Type", "text/plain; charset=utf-8");
+            }
+        }
+    };
+
+} // namespace crow
+
 #include <iomanip>
 #include <memory>
 
@@ -9611,8 +8467,7 @@ namespace crow
 
         void before_handle(request& req, response& res, context& ctx)
         {
-            // TODO(dranikpg): remove copies, use string_view with c++17
-            int count = req.headers.count("Cookie");
+            const int count = req.headers.count("Cookie");
             if (!count)
                 return;
             if (count > 1)
@@ -9621,34 +8476,49 @@ namespace crow
                 res.end();
                 return;
             }
-            std::string cookies = req.get_header_value("Cookie");
+
+            const std::string_view cookies_sv = req.get_header_value("Cookie");
+
             size_t pos = 0;
-            while (pos < cookies.size())
+            while (pos < cookies_sv.size())
             {
-                size_t pos_equal = cookies.find('=', pos);
-                if (pos_equal == cookies.npos)
+                const size_t pos_equal = cookies_sv.find('=', pos);
+                if (pos_equal == std::string_view::npos) {
                     break;
-                std::string name = cookies.substr(pos, pos_equal - pos);
-                name = utility::trim(name);
-                pos = pos_equal + 1;
-                if (pos == cookies.size())
-                    break;
-
-                size_t pos_semicolon = cookies.find(';', pos);
-                std::string value = cookies.substr(pos, pos_semicolon - pos);
-
-                value = utility::trim(value);
-                if (value[0] == '"' && value[value.size() - 1] == '"')
-                {
-                    value = value.substr(1, value.size() - 2);
                 }
 
-                ctx.jar.emplace(std::move(name), std::move(value));
+                std::string_view name_sv = cookies_sv.substr(pos, pos_equal - pos);
+                name_sv = utility::trim(name_sv);
 
-                pos = pos_semicolon;
-                if (pos == cookies.npos)
+                pos = pos_equal + 1;
+                if (pos == cookies_sv.size()) {
                     break;
-                pos++;
+                }
+
+                const size_t pos_semicolon = cookies_sv.find(';', pos);
+                std::string_view value_sv;
+
+                if (pos_semicolon == std::string_view::npos) {
+                     value_sv = cookies_sv.substr(pos);
+                     pos = cookies_sv.size();
+                } else {
+                     value_sv = cookies_sv.substr(pos, pos_semicolon - pos);
+                     pos = pos_semicolon + 1;
+                }
+
+                value_sv = utility::trim(value_sv);
+
+                if (!value_sv.empty() && value_sv.front() == '"' && value_sv.back() == '"')
+                {
+                     if (value_sv.size() >= 2) {
+                        value_sv.remove_prefix(1);
+                        value_sv.remove_suffix(1);
+                     } else {
+                        value_sv = value_sv.substr(0,0);
+                     }
+                }
+
+                ctx.jar.emplace(std::string(name_sv), std::string(value_sv));
             }
         }
 
@@ -9684,29 +8554,6 @@ namespace crow
 
     SimpleApp
     */
-} // namespace crow
-
-
-namespace crow
-{
-
-    struct UTF8
-    {
-        struct context
-        {};
-
-        void before_handle(request& /*req*/, response& /*res*/, context& /*ctx*/)
-        {}
-
-        void after_handle(request& /*req*/, response& res, context& /*ctx*/)
-        {
-            if (get_header_value(res.headers, "Content-Type").empty())
-            {
-                res.set_header("Content-Type", "text/plain; charset=utf-8");
-            }
-        }
-    };
-
 } // namespace crow
 
 
@@ -10656,6 +9503,175 @@ namespace crow
 
 #ifdef CROW_USE_BOOST
 #include <boost/asio.hpp>
+#include <boost/asio/basic_waitable_timer.hpp>
+#else
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+#include <asio.hpp>
+#include <asio/basic_waitable_timer.hpp>
+#endif
+
+#include <chrono>
+#include <functional>
+#include <map>
+#include <vector>
+
+
+namespace crow
+{
+#ifdef CROW_USE_BOOST
+    namespace asio = boost::asio;
+    using error_code = boost::system::error_code;
+#else
+    using error_code = asio::error_code;
+#endif
+    namespace detail
+    {
+
+        /// A class for scheduling functions to be called after a specific
+        /// amount of ticks. Ther tick length can  be handed over in constructor, 
+        /// the default tick length is equal to 1 second.
+        class task_timer
+        {
+        public:
+            using task_type = std::function<void()>;
+            using identifier_type = size_t;
+
+        private:
+            using clock_type = std::chrono::steady_clock;
+            using time_type = clock_type::time_point;
+        public:
+            task_timer(asio::io_context& io_context,
+                       const std::chrono::milliseconds tick_length =
+                            std::chrono::seconds(1)) :
+              io_context_(io_context), timer_(io_context_),
+              tick_length_ms_(tick_length)
+            {
+                timer_.expires_after(tick_length_ms_);
+                timer_.async_wait(
+                  std::bind(&task_timer::tick_handler, this,
+                  std::placeholders::_1));
+            }
+
+            ~task_timer() { timer_.cancel(); }
+
+            /// Cancel the scheduling of the given task 
+            ///
+            /// \param identifier_type task identifier of the task to cancel.
+            void cancel(identifier_type id)
+            {
+                tasks_.erase(id);
+                CROW_LOG_DEBUG << "task_timer task cancelled: " << this << ' ' << id;
+            }
+
+            /// Schedule the given task to be executed after the default amount
+            /// of ticks.
+
+            ///
+            /// \return identifier_type Used to cancel the thread.
+            /// It is not bound to this task_timer instance and in some cases
+            /// could lead to undefined behavior if used with other task_timer
+            /// objects or after the task has been successfully executed.
+            identifier_type schedule(const task_type& task)
+            {
+                return schedule(task, get_default_timeout());
+            }
+
+            /// Schedule the given task to be executed after the given time.
+
+            ///
+            /// \param timeout The amount of ticks to wait before execution.
+            ///
+            /// \return identifier_type Used to cancel the thread.
+            /// It is not bound to this task_timer instance and in some cases
+            /// could lead to undefined behavior if used with other task_timer
+            /// objects or after the task has been successfully executed.
+            identifier_type schedule(const task_type& task, uint8_t timeout)
+            {
+                tasks_.insert({++highest_id_,
+                               {clock_type::now() + (timeout * tick_length_ms_),
+                                task}});
+                CROW_LOG_DEBUG << "task_timer scheduled: " << this << ' ' <<
+                                  highest_id_;
+                return highest_id_;
+            }
+
+            /// Set the default timeout for this task_timer instance.
+            /// (Default: 5)
+
+            ///
+            /// \param timeout The amount of ticks to wait before
+            /// execution. 
+            /// For tick length \see tick_length_ms_ 
+            void set_default_timeout(uint8_t timeout) {
+                default_timeout_ = timeout;
+            }
+
+            /// Get the default timeout. (Default: 5)
+            uint8_t get_default_timeout() const {
+                return default_timeout_;
+            }
+
+            /// returns the length of one tick.
+            std::chrono::milliseconds get_tick_length() const {
+                return tick_length_ms_;
+            }
+
+        private:
+            void process_tasks()
+            {
+                time_type current_time = clock_type::now();
+                std::vector<identifier_type> finished_tasks;
+
+                for (const auto& task : tasks_)
+                {
+                    if (task.second.first < current_time)
+                    {
+                        (task.second.second)();
+                        finished_tasks.push_back(task.first);
+                        CROW_LOG_DEBUG << "task_timer called: " << this <<
+                                          ' ' << task.first;
+                    }
+                }
+
+                for (const auto& task : finished_tasks)
+                    tasks_.erase(task);
+
+                // If no task is currently scheduled, reset the issued ids back
+                // to 0.
+                if (tasks_.empty()) highest_id_ = 0;
+            }
+
+            void tick_handler(const error_code& ec)
+            {
+                if (ec) return;
+
+                process_tasks();
+
+                timer_.expires_after(tick_length_ms_);
+                timer_.async_wait(
+                  std::bind(&task_timer::tick_handler, this, std::placeholders::_1));
+            }
+
+        private:
+            asio::io_context& io_context_;
+            asio::basic_waitable_timer<clock_type> timer_;
+            std::map<identifier_type, std::pair<time_type, task_type>> tasks_;
+
+            // A continuously increasing number to be issued to threads to
+            // identify them. If no tasks are scheduled, it will be reset to 0.
+            identifier_type highest_id_{0};
+            std::chrono::milliseconds tick_length_ms_;
+            uint8_t default_timeout_{5};
+
+        };
+    } // namespace detail
+} // namespace crow
+
+
+#ifdef CROW_USE_BOOST
+#include <boost/asio.hpp>
 #else
 #ifndef ASIO_STANDALONE
 #define ASIO_STANDALONE
@@ -10770,9 +9786,13 @@ namespace crow
             {
                 continue_requested = true;
                 buffers_.clear();
-                static std::string expect_100_continue = "HTTP/1.1 100 Continue\r\n\r\n";
+                static const std::string expect_100_continue = "HTTP/1.1 100 Continue\r\n\r\n";
                 buffers_.emplace_back(expect_100_continue.data(), expect_100_continue.size());
-                do_write_sync(buffers_);
+                error_code ec = do_write_sync(buffers_);
+                if (ec)
+                {
+                    CROW_LOG_ERROR << ec << " buffer write error happened while handling sending continuation buffer header";
+                }
             }
         }
 
@@ -10941,7 +9961,12 @@ namespace crow
                 while (is.gcount() > 0)
                 {
                     buffers[0] = asio::buffer(buf, is.gcount());
-                    do_write_sync(buffers);
+                    error_code ec = do_write_sync(buffers);
+                    if (ec) {
+                        CROW_LOG_ERROR << ec << " - buffer write error happened while sending content of file "
+                                       << res.file_info.path << ". Writing stopped premature.";
+                        break;
+                    }
                     is.read(buf, sizeof(buf));
                 }
             }
@@ -10960,13 +9985,16 @@ namespace crow
 
         void do_write_general()
         {
+            error_code ec;
             if (res.body.length() < res_stream_threshold_)
             {
                 res_body_copy_.swap(res.body);
                 buffers_.emplace_back(res_body_copy_.data(), res_body_copy_.size());
 
-                do_write_sync(buffers_);
-
+                ec = do_write_sync(buffers_);
+                if (ec) {
+                    CROW_LOG_ERROR << ec << " - buffer write error happened while sending response. Writing stopped premature.";
+                }
                 if (need_to_start_read_after_complete_)
                 {
                     need_to_start_read_after_complete_ = false;
@@ -10976,7 +10004,10 @@ namespace crow
             }
             else
             {
-                asio::write(adaptor_.socket(), buffers_); // Write the response start / headers
+                asio::write(adaptor_.socket(), buffers_,ec); // Write the response start / headers
+                if (ec) {
+                    CROW_LOG_ERROR << ec << "- buffer write error happened while sending response start / headers. Writing stopped premature.";
+                }
                 cancel_deadline_timer();
                 if (res.body.length() > 0)
                 {
@@ -10987,7 +10018,11 @@ namespace crow
                     {
                         size_t to_transfer = CROW_MIN(16384UL, length - transferred);
                         buffers[0] = asio::const_buffer(data + transferred, to_transfer);
-                        do_write_sync(buffers);
+                        ec = do_write_sync(buffers);
+                        if (ec) {
+                            CROW_LOG_ERROR << ec << " - " << transferred << " - buffer write error happened while sending response. Writing stopped premature.";
+                            break;
+                        }
                         transferred += to_transfer;
                     }
                 }
@@ -11081,10 +10116,15 @@ namespace crow
               });
         }
 
-        inline void do_write_sync(std::vector<asio::const_buffer>& buffers)
+        inline error_code do_write_sync(std::vector<asio::const_buffer>& buffers)
         {
             error_code ec;
             asio::write(adaptor_.socket(), buffers, ec);
+            if (ec)
+            {
+                // CROW_LOG_ERROR << ec << " - happened while sending buffers";
+                CROW_LOG_DEBUG << this << " from write (sync)(2)";
+            }
 
             this->res.clear();
             this->res_body_copy_.clear();
@@ -11097,11 +10137,7 @@ namespace crow
                 this->parser_.clear();
             }
 
-            if (ec)
-            {
-                CROW_LOG_ERROR << ec << " - happened while sending buffers";
-                CROW_LOG_DEBUG << this << " from write (sync)(2)";
-            }
+            return ec;
         }
 
         void cancel_deadline_timer()
@@ -11164,369 +10200,6 @@ namespace crow
         std::atomic<unsigned int>& queue_length_;
     };
 
-} // namespace crow
-
-
-#ifdef CROW_USE_BOOST
-#include <boost/asio.hpp>
-#ifdef CROW_ENABLE_SSL
-#include <boost/asio/ssl.hpp>
-#endif
-#else
-#ifndef ASIO_STANDALONE
-#define ASIO_STANDALONE
-#endif
-#include <asio.hpp>
-#ifdef CROW_ENABLE_SSL
-#include <asio/ssl.hpp>
-#endif
-#endif
-
-#include <atomic>
-#include <chrono>
-#include <cstdint>
-#include <future>
-#include <memory>
-#include <thread>
-#include <vector>
-
-
-
-namespace crow // NOTE: Already documented in "crow/app.h"
-{
-#ifdef CROW_USE_BOOST
-    namespace asio = boost::asio;
-    using error_code = boost::system::error_code;
-#else
-    using error_code = asio::error_code;
-#endif
-    using tcp = asio::ip::tcp;
-    using stream_protocol = asio::local::stream_protocol;
-
-    template<typename Handler, typename Acceptor = TCPAcceptor, typename Adaptor = SocketAdaptor, typename... Middlewares>
-    class Server
-    {
-    public:
-      Server(Handler* handler,
-             typename Acceptor::endpoint endpoint, 
-             std::string server_name = std::string("Crow/") + VERSION,
-             std::tuple<Middlewares...>* middlewares = nullptr,
-             unsigned int concurrency = 1,
-             uint8_t timeout = 5,
-             typename Adaptor::context* adaptor_ctx = nullptr):
-          concurrency_(concurrency),
-          task_queue_length_pool_(concurrency_ - 1),
-          acceptor_(io_context_),
-          signals_(io_context_),
-          tick_timer_(io_context_),
-          handler_(handler),
-          timeout_(timeout),
-          server_name_(server_name),
-          middlewares_(middlewares),
-          adaptor_ctx_(adaptor_ctx)
-        {
-            if (startup_failed_) {
-                CROW_LOG_ERROR << "Startup failed; not running server.";
-                return;
-            }
-
-            error_code ec;
-
-            acceptor_.raw_acceptor().open(endpoint.protocol(), ec);
-            if (ec) {
-                CROW_LOG_ERROR << "Failed to open acceptor: " << ec.message();
-                startup_failed_ = true;
-                return;
-            }
-
-            acceptor_.raw_acceptor().set_option(Acceptor::reuse_address_option(), ec);
-            if (ec) {
-                CROW_LOG_ERROR << "Failed to set socket option: " << ec.message();
-                startup_failed_ = true;
-                return;
-            }
-
-            acceptor_.raw_acceptor().bind(endpoint, ec);
-            if (ec) {
-                CROW_LOG_ERROR << "Failed to bind to " << acceptor_.address()
-                            << ":" << acceptor_.port() << " - " << ec.message();
-                startup_failed_ = true;
-                return;
-            }
-
-            acceptor_.raw_acceptor().listen(tcp::acceptor::max_listen_connections, ec);
-            if (ec) {
-                CROW_LOG_ERROR << "Failed to listen on port: " << ec.message();
-                startup_failed_ = true;
-                return;
-            }
-
-
-        }
-
-        void set_tick_function(std::chrono::milliseconds d, std::function<void()> f)
-        {
-            tick_interval_ = d;
-            tick_function_ = f;
-        }
-
-        void on_tick()
-        {
-            tick_function_();
-            tick_timer_.expires_after(std::chrono::milliseconds(tick_interval_.count()));
-            tick_timer_.async_wait([this](const error_code& ec) {
-                if (ec)
-                    return;
-                on_tick();
-            });
-        }
-
-        void run()
-        {
-
-            if (startup_failed_) {
-                CROW_LOG_ERROR << "Server startup failed. Aborting run().";
-                return;
-            }
-
-            uint16_t worker_thread_count = concurrency_ - 1;
-            for (int i = 0; i < worker_thread_count; i++)
-                io_context_pool_.emplace_back(new asio::io_context());
-            get_cached_date_str_pool_.resize(worker_thread_count);
-            task_timer_pool_.resize(worker_thread_count);
-
-            std::vector<std::future<void>> v;
-            std::atomic<int> init_count(0);
-            for (uint16_t i = 0; i < worker_thread_count; i++)
-                v.push_back(
-                  std::async(
-                    std::launch::async, [this, i, &init_count] {
-                        // thread local date string get function
-                        auto last = std::chrono::steady_clock::now();
-
-                        std::string date_str;
-                        auto update_date_str = [&] {
-                            auto last_time_t = time(0);
-                            tm my_tm;
-
-#if defined(_MSC_VER) || defined(__MINGW32__)
-                            gmtime_s(&my_tm, &last_time_t);
-#else
-                            gmtime_r(&last_time_t, &my_tm);
-#endif
-                            date_str.resize(100);
-                            size_t date_str_sz = strftime(&date_str[0], 99, "%a, %d %b %Y %H:%M:%S GMT", &my_tm);
-                            date_str.resize(date_str_sz);
-                        };
-                        update_date_str();
-                        get_cached_date_str_pool_[i] = [&]() -> std::string {
-                            if (std::chrono::steady_clock::now() - last >= std::chrono::seconds(1))
-                            {
-                                last = std::chrono::steady_clock::now();
-                                update_date_str();
-                            }
-                            return date_str;
-                        };
-
-                        // initializing task timers
-                        detail::task_timer task_timer(*io_context_pool_[i]);
-                        task_timer.set_default_timeout(timeout_);
-                        task_timer_pool_[i] = &task_timer;
-                        task_queue_length_pool_[i] = 0;
-
-                        init_count++;
-                        while (1)
-                        {
-                            try
-                            {
-                                if (io_context_pool_[i]->run() == 0)
-                                {
-                                    // when io_service.run returns 0, there are no more works to do.
-                                    break;
-                                }
-                            }
-                            catch (std::exception& e)
-                            {
-                                CROW_LOG_ERROR << "Worker Crash: An uncaught exception occurred: " << e.what();
-                            }
-                        }
-                    }));
-
-            if (tick_function_ && tick_interval_.count() > 0)
-            {
-                tick_timer_.expires_after(std::chrono::milliseconds(tick_interval_.count()));
-                tick_timer_.async_wait(
-                  [this](const error_code& ec) {
-                      if (ec)
-                          return;
-                      on_tick();
-                  });
-            }
-            handler_->port(acceptor_.port());
-            handler_->address_is_bound();
-            CROW_LOG_INFO << server_name_ 
-                          << " server is running at " << acceptor_.url_display(handler_->ssl_used()) 
-                          << " using " << concurrency_ << " threads";
-            CROW_LOG_INFO << "Call `app.loglevel(crow::LogLevel::Warning)` to hide Info level logs.";
-
-            signals_.async_wait(
-              [&](const error_code& /*error*/, int /*signal_number*/) {
-                  stop();
-              });
-
-            while (worker_thread_count != init_count)
-                std::this_thread::yield();
-
-            do_accept();
-
-            std::thread(
-              [this] {
-                  notify_start();
-                  io_context_.run();
-                  CROW_LOG_INFO << "Exiting.";
-              })
-              .join();
-        }
-
-        void stop()
-        {
-            shutting_down_ = true; // Prevent the acceptor from taking new connections
-
-            // Explicitly close the acceptor
-            // else asio will throw an exception (linux only), when trying to start server again:
-            // what():  bind: Address already in use
-            if (acceptor_.raw_acceptor().is_open())
-            {
-                CROW_LOG_INFO << "Closing acceptor. " << &acceptor_;
-                error_code ec;
-                acceptor_.raw_acceptor().close(ec);
-                if (ec)
-                {
-                    CROW_LOG_WARNING << "Failed to close acceptor: " << ec.message();
-                }
-            }
-
-            for (auto& io_context : io_context_pool_)
-            {
-                if (io_context != nullptr)
-                {
-                    CROW_LOG_INFO << "Closing IO service " << &io_context;
-                    io_context->stop(); // Close all io_services (and HTTP connections)
-                }
-            }
-
-            CROW_LOG_INFO << "Closing main IO service (" << &io_context_ << ')';
-            io_context_.stop(); // Close main io_service
-        }
-
-        
-        uint16_t port() const {
-            return acceptor_.local_endpoint().port();
-        }
-
-        /// Wait until the server has properly started or until timeout
-        std::cv_status wait_for_start(std::chrono::steady_clock::time_point wait_until)
-        {
-            std::unique_lock<std::mutex> lock(start_mutex_);
-
-            std::cv_status status = std::cv_status::no_timeout;
-            while (!server_started_ && !startup_failed_ && status == std::cv_status::no_timeout)
-                status = cv_started_.wait_until(lock, wait_until);
-            return status;
-        }
-
-
-        void signal_clear()
-        {
-            signals_.clear();
-        }
-
-        void signal_add(int signal_number)
-        {
-            signals_.add(signal_number);
-        }
-
-    private:
-        size_t pick_io_context_idx()
-        {
-            size_t min_queue_idx = 0;
-
-            // TODO improve load balancing
-            // size_t is used here to avoid the security issue https://codeql.github.com/codeql-query-help/cpp/cpp-comparison-with-wider-type/
-            // even though the max value of this can be only uint16_t as concurrency is uint16_t.
-            for (size_t i = 1; i < task_queue_length_pool_.size() && task_queue_length_pool_[min_queue_idx] > 0; i++)
-            // No need to check other io_services if the current one has no tasks
-            {
-                if (task_queue_length_pool_[i] < task_queue_length_pool_[min_queue_idx])
-                    min_queue_idx = i;
-            }
-            return min_queue_idx;
-        }
-
-        void do_accept()
-        {
-            if (!shutting_down_)
-            {
-                size_t context_idx = pick_io_context_idx();
-                asio::io_context& ic = *io_context_pool_[context_idx];
-                auto p = std::make_shared<Connection<Adaptor, Handler, Middlewares...>>(
-                    ic, handler_, server_name_, middlewares_,
-                    get_cached_date_str_pool_[context_idx], *task_timer_pool_[context_idx], adaptor_ctx_, task_queue_length_pool_[context_idx]);
-                    
-                CROW_LOG_DEBUG << &ic << " {" << context_idx << "} queue length: " << task_queue_length_pool_[context_idx];
-
-                acceptor_.raw_acceptor().async_accept(
-                  p->socket(),
-                  [this, p, &ic](error_code ec) {
-                      if (!ec)
-                      {
-                          asio::post(ic,
-                            [p] {
-                                p->start();
-                            });
-                      }
-                      do_accept();
-                  });
-            }
-        }
-
-        /// Notify anything using `wait_for_start()` to proceed
-        void notify_start()
-        {
-            std::unique_lock<std::mutex> lock(start_mutex_);
-            server_started_ = true;
-            cv_started_.notify_all();
-        }
-
-    private:
-        unsigned int concurrency_{2};
-        std::vector<std::atomic<unsigned int>> task_queue_length_pool_;
-        std::vector<std::unique_ptr<asio::io_context>> io_context_pool_;
-        asio::io_context io_context_;
-        std::vector<detail::task_timer*> task_timer_pool_;
-        std::vector<std::function<std::string()>> get_cached_date_str_pool_;
-        Acceptor acceptor_;
-        bool shutting_down_ = false;
-        bool server_started_{false};
-        bool startup_failed_ = false;
-        std::condition_variable cv_started_;
-        std::mutex start_mutex_;
-        asio::signal_set signals_;
-
-        asio::basic_waitable_timer<std::chrono::high_resolution_clock> tick_timer_;
-
-        Handler* handler_;
-        std::uint8_t timeout_;
-        std::string server_name_;
-        bool use_unix_;
-
-        std::chrono::milliseconds tick_interval_;
-        std::function<void()> tick_function_;
-
-        std::tuple<Middlewares...>* middlewares_;
-
-        typename Adaptor::context* adaptor_ctx_;
-    };
 } // namespace crow
 
 #include <array>
@@ -12240,38 +10913,40 @@ namespace crow // NOTE: Already documented in "crow/app.h"
             /// Also destroys the object if the Close flag is set.
             void do_write()
             {
-                if (write_buffers_.empty()) return;
+                if (sending_buffers_.empty()) {
+                    if (write_buffers_.empty()) return;
 
-                sending_buffers_.swap(write_buffers_);
-                std::vector<asio::const_buffer> buffers;
-                buffers.reserve(sending_buffers_.size());
-                for (auto& s : sending_buffers_)
-                {
-                    buffers.emplace_back(asio::buffer(s));
-                }
-                auto watch = std::weak_ptr<void>{anchor_};
-                asio::async_write(
-                    adaptor_.socket(), buffers,
-                    [shared_this = this->shared_from_this(), watch](const error_code& ec, std::size_t /*bytes_transferred*/) {
-                        auto anchor = watch.lock();
-                        if (anchor == nullptr)
-                            return;
+                    sending_buffers_.swap(write_buffers_);
+                    std::vector<asio::const_buffer> buffers;
+                    buffers.reserve(sending_buffers_.size());
+                    for (auto &s: sending_buffers_)
+                    {
+                        buffers.emplace_back(asio::buffer(s));
+                    }
+                    auto watch = std::weak_ptr<void>{anchor_};
+                    asio::async_write(
+                        adaptor_.socket(), buffers,
+                        [shared_this = this->shared_from_this(), watch](const error_code &ec, std::size_t /*bytes_transferred*/) {
+                            auto anchor = watch.lock();
+                            if (anchor == nullptr)
+                                return;
 
-                        if (!ec && !shared_this->close_connection_)
-                        {
-                            shared_this->sending_buffers_.clear();
-                            if (!shared_this->write_buffers_.empty())
-                                shared_this->do_write();
-                            if (shared_this->has_sent_close_)
+                            if (!ec && !shared_this->close_connection_)
+                            {
+                                shared_this->sending_buffers_.clear();
+                                if (!shared_this->write_buffers_.empty())
+                                    shared_this->do_write();
+                                if (shared_this->has_sent_close_)
+                                    shared_this->close_connection_ = true;
+                            }
+                            else
+                            {
+                                shared_this->sending_buffers_.clear();
                                 shared_this->close_connection_ = true;
-                        }
-                        else
-                        {
-                            shared_this->sending_buffers_.clear();
-                            shared_this->close_connection_ = true;
-                            shared_this->check_destroy();
-                        }
-                    });
+                                shared_this->check_destroy();
+                            }
+                        });
+                }
             }
 
             /// Destroy the Connection.
@@ -12375,8 +11050,1348 @@ namespace crow // NOTE: Already documented in "crow/app.h"
     } // namespace websocket
 } // namespace crow
 
+#ifdef CROW_USE_BOOST
+#include <boost/asio.hpp>
+#ifdef CROW_ENABLE_SSL
+#include <boost/asio/ssl.hpp>
+#endif
+#else
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+#include <asio.hpp>
+#ifdef CROW_ENABLE_SSL
+#include <asio/ssl.hpp>
+#endif
+#endif
+
+
+namespace crow
+{
+#ifdef CROW_USE_BOOST
+    namespace asio = boost::asio;
+    using error_code = boost::system::error_code;
+#else
+    using error_code = asio::error_code;
+#endif
+    using tcp = asio::ip::tcp;
+    using stream_protocol = asio::local::stream_protocol;
+
+    struct TCPAcceptor
+    {
+        using endpoint = tcp::endpoint;
+        tcp::acceptor acceptor_;
+        TCPAcceptor(asio::io_context& io_context):
+          acceptor_(io_context) {}
+
+        int16_t port() const
+        {
+            return acceptor_.local_endpoint().port();
+        }
+        std::string address() const
+        {
+            return acceptor_.local_endpoint().address().to_string();
+        }
+        std::string url_display(bool ssl_used) const
+        {
+            auto address = acceptor_.local_endpoint().address();
+            return (ssl_used ? "https://" : "http://") + (address.is_v4() ? address.to_string() : "[" + address.to_string() + "]") + ":" + std::to_string(acceptor_.local_endpoint().port());
+        }
+        tcp::acceptor& raw_acceptor()
+        {
+            return acceptor_;
+        }
+        endpoint local_endpoint() const
+        {
+            return acceptor_.local_endpoint();
+        }
+        inline static tcp::acceptor::reuse_address reuse_address_option() { return tcp::acceptor::reuse_address(true); }
+    };
+
+    struct UnixSocketAcceptor
+    {
+        using endpoint = stream_protocol::endpoint;
+        stream_protocol::acceptor acceptor_;
+        UnixSocketAcceptor(asio::io_context& io_context):
+          acceptor_(io_context) {}
+
+        int16_t port() const
+        {
+            return 0;
+        }
+        std::string address() const
+        {
+            return acceptor_.local_endpoint().path();
+        }
+        std::string url_display(bool) const
+        {
+            return acceptor_.local_endpoint().path();
+        }
+        stream_protocol::acceptor& raw_acceptor()
+        {
+            return acceptor_;
+        }
+        endpoint local_endpoint() const
+        {
+            return acceptor_.local_endpoint();
+        }
+        inline static stream_protocol::acceptor::reuse_address reuse_address_option()
+        {
+            // reuse addr must be false (https://github.com/chriskohlhoff/asio/issues/622)
+            return stream_protocol::acceptor::reuse_address(false);
+        }
+    };
+} // namespace crow
+
+
+namespace crow
+{
+    constexpr const char VERSION[] = "1.3";
+}
+
+
+#ifdef CROW_USE_BOOST
+#include <boost/asio.hpp>
+#ifdef CROW_ENABLE_SSL
+#include <boost/asio/ssl.hpp>
+#endif
+#else
+#ifndef ASIO_STANDALONE
+#define ASIO_STANDALONE
+#endif
+#include <asio.hpp>
+#ifdef CROW_ENABLE_SSL
+#include <asio/ssl.hpp>
+#endif
+#endif
+
+#include <atomic>
+#include <chrono>
+#include <cstdint>
+#include <future>
+#include <memory>
+#include <thread>
+#include <vector>
+
+
+
+namespace crow // NOTE: Already documented in "crow/app.h"
+{
+#ifdef CROW_USE_BOOST
+    namespace asio = boost::asio;
+    using error_code = boost::system::error_code;
+#else
+    using error_code = asio::error_code;
+#endif
+    using tcp = asio::ip::tcp;
+    using stream_protocol = asio::local::stream_protocol;
+
+    template<typename Handler, typename Acceptor = TCPAcceptor, typename Adaptor = SocketAdaptor, typename... Middlewares>
+    class Server
+    {
+    public:
+      Server(Handler* handler,
+             typename Acceptor::endpoint endpoint, 
+             std::string server_name = std::string("Crow/") + VERSION,
+             std::tuple<Middlewares...>* middlewares = nullptr,
+             unsigned int concurrency = 1,
+             uint8_t timeout = 5,
+             typename Adaptor::context* adaptor_ctx = nullptr):
+          concurrency_(concurrency),
+          task_queue_length_pool_(concurrency_ - 1),
+          acceptor_(io_context_),
+          signals_(io_context_),
+          tick_timer_(io_context_),
+          handler_(handler),
+          timeout_(timeout),
+          server_name_(server_name),
+          middlewares_(middlewares),
+          adaptor_ctx_(adaptor_ctx)
+        {
+            if (startup_failed_) {
+                CROW_LOG_ERROR << "Startup failed; not running server.";
+                return;
+            }
+
+            error_code ec;
+
+            acceptor_.raw_acceptor().open(endpoint.protocol(), ec);
+            if (ec) {
+                CROW_LOG_ERROR << "Failed to open acceptor: " << ec.message();
+                startup_failed_ = true;
+                return;
+            }
+
+            acceptor_.raw_acceptor().set_option(Acceptor::reuse_address_option(), ec);
+            if (ec) {
+                CROW_LOG_ERROR << "Failed to set socket option: " << ec.message();
+                startup_failed_ = true;
+                return;
+            }
+
+            acceptor_.raw_acceptor().bind(endpoint, ec);
+            if (ec) {
+                CROW_LOG_ERROR << "Failed to bind to " << acceptor_.address()
+                            << ":" << acceptor_.port() << " - " << ec.message();
+                startup_failed_ = true;
+                return;
+            }
+
+            acceptor_.raw_acceptor().listen(tcp::acceptor::max_listen_connections, ec);
+            if (ec) {
+                CROW_LOG_ERROR << "Failed to listen on port: " << ec.message();
+                startup_failed_ = true;
+                return;
+            }
+
+
+        }
+
+        void set_tick_function(std::chrono::milliseconds d, std::function<void()> f)
+        {
+            tick_interval_ = d;
+            tick_function_ = f;
+        }
+
+        void on_tick()
+        {
+            tick_function_();
+            tick_timer_.expires_after(std::chrono::milliseconds(tick_interval_.count()));
+            tick_timer_.async_wait([this](const error_code& ec) {
+                if (ec)
+                    return;
+                on_tick();
+            });
+        }
+
+        void run()
+        {
+
+            if (startup_failed_) {
+                CROW_LOG_ERROR << "Server startup failed. Aborting run().";
+                return;
+            }
+
+            uint16_t worker_thread_count = concurrency_ - 1;
+            for (int i = 0; i < worker_thread_count; i++)
+                io_context_pool_.emplace_back(new asio::io_context());
+            get_cached_date_str_pool_.resize(worker_thread_count);
+            task_timer_pool_.resize(worker_thread_count);
+
+            std::vector<std::future<void>> v;
+            std::atomic<int> init_count(0);
+            for (uint16_t i = 0; i < worker_thread_count; i++)
+                v.push_back(
+                  std::async(
+                    std::launch::async, [this, i, &init_count] {
+                        // thread local date string get function
+                        auto last = std::chrono::steady_clock::now();
+
+                        std::string date_str;
+                        auto update_date_str = [&] {
+                            auto last_time_t = time(0);
+                            tm my_tm;
+
+#if defined(_MSC_VER) || defined(__MINGW32__)
+                            gmtime_s(&my_tm, &last_time_t);
+#else
+                            gmtime_r(&last_time_t, &my_tm);
+#endif
+                            date_str.resize(100);
+                            size_t date_str_sz = strftime(&date_str[0], 99, "%a, %d %b %Y %H:%M:%S GMT", &my_tm);
+                            date_str.resize(date_str_sz);
+                        };
+                        update_date_str();
+                        get_cached_date_str_pool_[i] = [&]() -> std::string {
+                            if (std::chrono::steady_clock::now() - last >= std::chrono::seconds(1))
+                            {
+                                last = std::chrono::steady_clock::now();
+                                update_date_str();
+                            }
+                            return date_str;
+                        };
+
+                        // initializing task timers
+                        detail::task_timer task_timer(*io_context_pool_[i]);
+                        task_timer.set_default_timeout(timeout_);
+                        task_timer_pool_[i] = &task_timer;
+                        task_queue_length_pool_[i] = 0;
+
+                        init_count++;
+                        while (1)
+                        {
+                            try
+                            {
+                                if (io_context_pool_[i]->run() == 0)
+                                {
+                                    // when io_service.run returns 0, there are no more works to do.
+                                    break;
+                                }
+                            }
+                            catch (std::exception& e)
+                            {
+                                CROW_LOG_ERROR << "Worker Crash: An uncaught exception occurred: " << e.what();
+                            }
+                        }
+                    }));
+
+            if (tick_function_ && tick_interval_.count() > 0)
+            {
+                tick_timer_.expires_after(std::chrono::milliseconds(tick_interval_.count()));
+                tick_timer_.async_wait(
+                  [this](const error_code& ec) {
+                      if (ec)
+                          return;
+                      on_tick();
+                  });
+            }
+            handler_->port(acceptor_.port());
+            handler_->address_is_bound();
+            CROW_LOG_INFO << server_name_ 
+                          << " server is running at " << acceptor_.url_display(handler_->ssl_used()) 
+                          << " using " << concurrency_ << " threads";
+            CROW_LOG_INFO << "Call `app.loglevel(crow::LogLevel::Warning)` to hide Info level logs.";
+
+            signals_.async_wait(
+              [&](const error_code& /*error*/, int /*signal_number*/) {
+                  stop();
+              });
+
+            while (worker_thread_count != init_count)
+                std::this_thread::yield();
+
+            do_accept();
+
+            std::thread(
+              [this] {
+                  notify_start();
+                  io_context_.run();
+                  CROW_LOG_INFO << "Exiting.";
+              })
+              .join();
+        }
+
+        void stop()
+        {
+            shutting_down_ = true; // Prevent the acceptor from taking new connections
+
+            // Explicitly close the acceptor
+            // else asio will throw an exception (linux only), when trying to start server again:
+            // what():  bind: Address already in use
+            if (acceptor_.raw_acceptor().is_open())
+            {
+                CROW_LOG_INFO << "Closing acceptor. " << &acceptor_;
+                error_code ec;
+                acceptor_.raw_acceptor().close(ec);
+                if (ec)
+                {
+                    CROW_LOG_WARNING << "Failed to close acceptor: " << ec.message();
+                }
+            }
+
+            for (auto& io_context : io_context_pool_)
+            {
+                if (io_context != nullptr)
+                {
+                    CROW_LOG_INFO << "Closing IO service " << &io_context;
+                    io_context->stop(); // Close all io_services (and HTTP connections)
+                }
+            }
+
+            CROW_LOG_INFO << "Closing main IO service (" << &io_context_ << ')';
+            io_context_.stop(); // Close main io_service
+        }
+
+        
+        uint16_t port() const {
+            return acceptor_.local_endpoint().port();
+        }
+
+        /// Wait until the server has properly started or until timeout
+        std::cv_status wait_for_start(std::chrono::steady_clock::time_point wait_until)
+        {
+            std::unique_lock<std::mutex> lock(start_mutex_);
+
+            std::cv_status status = std::cv_status::no_timeout;
+            while (!server_started_ && !startup_failed_ && status == std::cv_status::no_timeout)
+                status = cv_started_.wait_until(lock, wait_until);
+            return status;
+        }
+
+
+        void signal_clear()
+        {
+            signals_.clear();
+        }
+
+        void signal_add(int signal_number)
+        {
+            signals_.add(signal_number);
+        }
+
+    private:
+        size_t pick_io_context_idx()
+        {
+            size_t min_queue_idx = 0;
+
+            // TODO improve load balancing
+            // size_t is used here to avoid the security issue https://codeql.github.com/codeql-query-help/cpp/cpp-comparison-with-wider-type/
+            // even though the max value of this can be only uint16_t as concurrency is uint16_t.
+            for (size_t i = 1; i < task_queue_length_pool_.size() && task_queue_length_pool_[min_queue_idx] > 0; i++)
+            // No need to check other io_services if the current one has no tasks
+            {
+                if (task_queue_length_pool_[i] < task_queue_length_pool_[min_queue_idx])
+                    min_queue_idx = i;
+            }
+            return min_queue_idx;
+        }
+
+        void do_accept()
+        {
+            if (!shutting_down_)
+            {
+                size_t context_idx = pick_io_context_idx();
+                asio::io_context& ic = *io_context_pool_[context_idx];
+                auto p = std::make_shared<Connection<Adaptor, Handler, Middlewares...>>(
+                    ic, handler_, server_name_, middlewares_,
+                    get_cached_date_str_pool_[context_idx], *task_timer_pool_[context_idx], adaptor_ctx_, task_queue_length_pool_[context_idx]);
+                    
+                CROW_LOG_DEBUG << &ic << " {" << context_idx << "} queue length: " << task_queue_length_pool_[context_idx];
+
+                acceptor_.raw_acceptor().async_accept(
+                  p->socket(),
+                  [this, p, &ic](error_code ec) {
+                      if (!ec)
+                      {
+                          asio::post(ic,
+                            [p] {
+                                p->start();
+                            });
+                      }
+                      do_accept();
+                  });
+            }
+        }
+
+        /// Notify anything using `wait_for_start()` to proceed
+        void notify_start()
+        {
+            std::unique_lock<std::mutex> lock(start_mutex_);
+            server_started_ = true;
+            cv_started_.notify_all();
+        }
+
+    private:
+        unsigned int concurrency_{2};
+        std::vector<std::atomic<unsigned int>> task_queue_length_pool_;
+        std::vector<std::unique_ptr<asio::io_context>> io_context_pool_;
+        asio::io_context io_context_;
+        std::vector<detail::task_timer*> task_timer_pool_;
+        std::vector<std::function<std::string()>> get_cached_date_str_pool_;
+        Acceptor acceptor_;
+        bool shutting_down_ = false;
+        bool server_started_{false};
+        bool startup_failed_ = false;
+        std::condition_variable cv_started_;
+        std::mutex start_mutex_;
+        asio::signal_set signals_;
+
+        asio::basic_waitable_timer<std::chrono::high_resolution_clock> tick_timer_;
+
+        Handler* handler_;
+        std::uint8_t timeout_;
+        std::string server_name_;
+        bool use_unix_;
+
+        std::chrono::milliseconds tick_interval_;
+        std::function<void()> tick_function_;
+
+        std::tuple<Middlewares...>* middlewares_;
+
+        typename Adaptor::context* adaptor_ctx_;
+    };
+} // namespace crow
+
+/**
+ * \file crow/mustache.h
+ * \brief This file includes the definition of the crow::mustache
+ * namespace and its members.
+ */
+
+#include <string>
+#include <vector>
+#include <fstream>
+#include <iterator>
+#include <functional>
+
+namespace crow // NOTE: Already documented in "crow/app.h"
+{
+    /**
+     * \namespace crow::mustache
+     * \brief In this namespace is defined most of the functions and
+     * classes related to template rendering.
+     *
+     * If you are here you might want to read these functions and
+     * classes:
+     *
+     * - \ref template_t
+     * - \ref load_text
+     * - \ref load_text_unsafe
+     * - \ref load
+     * - \ref load_unsafe
+     *
+     * As name suggest, crow uses [mustache](https://en.wikipedia.org/wiki/Mustache_(template_system))
+     * as main template rendering system.
+     *
+     * You may be interested in taking a look at the [Templating guide
+     * page](https://crowcpp.org/master/guides/templating/).
+     */
+    namespace mustache
+    {
+        using context = json::wvalue;
+
+        template_t load(const std::string& filename);
+
+        /**
+         * \class invalid_template_exception
+         * \brief Represents compilation error of an template. Throwed
+         * specially at mustache compile time.
+         */
+        class invalid_template_exception : public std::exception
+        {
+        public:
+            invalid_template_exception(const std::string& msg_):
+              msg("crow::mustache error: " + msg_)
+            {}
+            virtual const char* what() const throw() override
+            {
+                return msg.c_str();
+            }
+            std::string msg;
+        };
+
+        /**
+         * \struct rendered_template
+         * \brief Returned object after call the
+         * \ref template_t::render() method. Its intended to be
+         * returned during a **rule declaration**.
+         *
+         * \see \ref CROW_ROUTE
+         * \see \ref CROW_BP_ROUTE
+         */
+        struct rendered_template : returnable
+        {
+            rendered_template():
+              returnable("text/html") {}
+
+            rendered_template(std::string& body):
+              returnable("text/html"), body_(std::move(body)) {}
+
+            std::string body_;
+
+            std::string dump() const override
+            {
+                return body_;
+            }
+        };
+
+        /**
+         * \enum ActionType
+         * \brief Used in \ref Action to represent different parsing
+         * behaviors.
+         *
+         * \see \ref Action
+         */
+        enum class ActionType
+        {
+            Ignore,
+            Tag,
+            UnescapeTag,
+            OpenBlock,
+            CloseBlock,
+            ElseBlock,
+            Partial,
+        };
+
+        /**
+         * \struct Action
+         * \brief Used during mustache template compilation to
+         * represent parsing actions.
+         *
+         * \see \ref compile
+         * \see \ref template_t
+         */
+        struct Action
+        {
+            bool has_end_match;
+            char tag_char;
+            int start;
+            int end;
+            int pos;
+            ActionType t;
+
+            Action(char tag_char_, ActionType t_, size_t start_, size_t end_, size_t pos_ = 0):
+              has_end_match(false), tag_char(tag_char_), start(static_cast<int>(start_)), end(static_cast<int>(end_)), pos(static_cast<int>(pos_)), t(t_)
+            {
+            }
+
+            bool missing_end_pair() const {
+                switch (t)
+                {
+                    case ActionType::Ignore:
+                    case ActionType::Tag:
+                    case ActionType::UnescapeTag:
+                    case ActionType::CloseBlock:
+                    case ActionType::Partial:
+                        return false;
+
+                    // requires a match
+                    case ActionType::OpenBlock:
+                    case ActionType::ElseBlock:
+                        return !has_end_match;
+
+                    default:
+                        throw std::logic_error("invalid type");
+                }
+            }
+        };
+
+        /**
+         * \class template_t
+         * \brief Compiled mustache template object.
+         *
+         * \warning Use \ref compile instead.
+         */
+        class template_t
+        {
+        public:
+            template_t(std::string body):
+              body_(std::move(body))
+            {
+                // {{ {{# {{/ {{^ {{! {{> {{=
+                parse();
+            }
+
+        private:
+            std::string tag_name(const Action& action) const
+            {
+                return body_.substr(action.start, action.end - action.start);
+            }
+            auto find_context(const std::string& name, const std::vector<const context*>& stack, bool shouldUseOnlyFirstStackValue = false) const -> std::pair<bool, const context&>
+            {
+                if (name == ".")
+                {
+                    return {true, *stack.back()};
+                }
+                static json::wvalue empty_str;
+                empty_str = "";
+
+                int dotPosition = name.find(".");
+                if (dotPosition == static_cast<int>(name.npos))
+                {
+                    for (auto it = stack.rbegin(); it != stack.rend(); ++it)
+                    {
+                        if ((*it)->t() == json::type::Object)
+                        {
+                            if ((*it)->count(name))
+                                return {true, (**it)[name]};
+                        }
+                    }
+                }
+                else
+                {
+                    std::vector<int> dotPositions;
+                    dotPositions.push_back(-1);
+                    while (dotPosition != static_cast<int>(name.npos))
+                    {
+                        dotPositions.push_back(dotPosition);
+                        dotPosition = name.find(".", dotPosition + 1);
+                    }
+                    dotPositions.push_back(name.size());
+                    std::vector<std::string> names;
+                    names.reserve(dotPositions.size() - 1);
+                    for (int i = 1; i < static_cast<int>(dotPositions.size()); i++)
+                        names.emplace_back(name.substr(dotPositions[i - 1] + 1, dotPositions[i] - dotPositions[i - 1] - 1));
+
+                    for (auto it = stack.rbegin(); it != stack.rend(); ++it)
+                    {
+                        const context* view = *it;
+                        bool found = true;
+                        for (auto jt = names.begin(); jt != names.end(); ++jt)
+                        {
+                            if (view->t() == json::type::Object &&
+                                view->count(*jt))
+                            {
+                                view = &(*view)[*jt];
+                            }
+                            else
+                            {
+                                if (shouldUseOnlyFirstStackValue)
+                                {
+                                    return {false, empty_str};
+                                }
+                                found = false;
+                                break;
+                            }
+                        }
+                        if (found)
+                            return {true, *view};
+                    }
+                }
+
+                return {false, empty_str};
+            }
+
+            void escape(const std::string& in, std::string& out) const
+            {
+                out.reserve(out.size() + in.size());
+                for (auto it = in.begin(); it != in.end(); ++it)
+                {
+                    switch (*it)
+                    {
+                        case '&': out += "&amp;"; break;
+                        case '<': out += "&lt;"; break;
+                        case '>': out += "&gt;"; break;
+                        case '"': out += "&quot;"; break;
+                        case '\'': out += "&#39;"; break;
+                        case '/': out += "&#x2F;"; break;
+                        case '`': out += "&#x60;"; break;
+                        case '=': out += "&#x3D;"; break;
+                        default: out += *it; break;
+                    }
+                }
+            }
+
+            bool isTagInsideObjectBlock(const int& current, const std::vector<const context*>& stack) const
+            {
+                int openedBlock = 0;
+                for (int i = current; i > 0; --i)
+                {
+                    auto& action = actions_[i - 1];
+
+                    if (action.t == ActionType::OpenBlock)
+                    {
+                        if (openedBlock == 0 && (*stack.rbegin())->t() == json::type::Object)
+                        {
+                            return true;
+                        }
+                        --openedBlock;
+                    }
+                    else if (action.t == ActionType::CloseBlock)
+                    {
+                        ++openedBlock;
+                    }
+                }
+
+                return false;
+            }
+
+            void render_internal(int actionBegin, int actionEnd, std::vector<const context*>& stack, std::string& out, int indent) const
+            {
+                int current = actionBegin;
+
+                if (indent)
+                    out.insert(out.size(), indent, ' ');
+
+                while (current < actionEnd)
+                {
+                    auto& fragment = fragments_[current];
+                    auto& action = actions_[current];
+                    render_fragment(fragment, indent, out);
+                    switch (action.t)
+                    {
+                        case ActionType::Ignore:
+                            // do nothing
+                            break;
+                        case ActionType::Partial:
+                        {
+                            std::string partial_name = tag_name(action);
+                            auto partial_templ = load(partial_name);
+                            int partial_indent = action.pos;
+                            partial_templ.render_internal(0, partial_templ.fragments_.size() - 1, stack, out, partial_indent ? indent + partial_indent : 0);
+                        }
+                        break;
+                        case ActionType::UnescapeTag:
+                        case ActionType::Tag:
+                        {
+                            bool shouldUseOnlyFirstStackValue = false;
+                            if (isTagInsideObjectBlock(current, stack))
+                            {
+                                shouldUseOnlyFirstStackValue = true;
+                            }
+                            auto optional_ctx = find_context(tag_name(action), stack, shouldUseOnlyFirstStackValue);
+                            auto& ctx = optional_ctx.second;
+                            switch (ctx.t())
+                            {
+                                case json::type::False:
+                                case json::type::True:
+                                case json::type::Number:
+                                    out += ctx.dump();
+                                    break;
+                                case json::type::String:
+                                    if (action.t == ActionType::Tag)
+                                        escape(ctx.s, out);
+                                    else
+                                        out += ctx.s;
+                                    break;
+                                case json::type::Function:
+                                {
+                                    std::string execute_result = ctx.execute();
+                                    while (execute_result.find("{{") != std::string::npos)
+                                    {
+                                        template_t result_plug(execute_result);
+                                        execute_result = result_plug.render_string(*(stack[0]));
+                                    }
+
+                                    if (action.t == ActionType::Tag)
+                                        escape(execute_result, out);
+                                    else
+                                        out += execute_result;
+                                }
+                                break;
+                                default:
+                                    throw std::runtime_error("not implemented tag type" + utility::lexical_cast<std::string>(static_cast<int>(ctx.t())));
+                            }
+                        }
+                        break;
+                        case ActionType::ElseBlock:
+                        {
+                            static context nullContext;
+                            auto optional_ctx = find_context(tag_name(action), stack);
+                            if (!optional_ctx.first)
+                            {
+                                stack.emplace_back(&nullContext);
+                                break;
+                            }
+
+                            auto& ctx = optional_ctx.second;
+                            switch (ctx.t())
+                            {
+                                case json::type::List:
+                                    if (ctx.l && !ctx.l->empty())
+                                        current = action.pos;
+                                    else
+                                        stack.emplace_back(&nullContext);
+                                    break;
+                                case json::type::False:
+                                case json::type::Null:
+                                    stack.emplace_back(&nullContext);
+                                    break;
+                                default:
+                                    current = action.pos;
+                                    break;
+                            }
+                            break;
+                        }
+                        case ActionType::OpenBlock:
+                        {
+                            auto optional_ctx = find_context(tag_name(action), stack);
+                            if (!optional_ctx.first)
+                            {
+                                current = action.pos;
+                                break;
+                            }
+
+                            auto& ctx = optional_ctx.second;
+                            switch (ctx.t())
+                            {
+                                case json::type::List:
+                                    if (ctx.l)
+                                        for (auto it = ctx.l->begin(); it != ctx.l->end(); ++it)
+                                        {
+                                            stack.push_back(&*it);
+                                            render_internal(current + 1, action.pos, stack, out, indent);
+                                            stack.pop_back();
+                                        }
+                                    current = action.pos;
+                                    break;
+                                case json::type::Number:
+                                case json::type::String:
+                                case json::type::Object:
+                                case json::type::True:
+                                    stack.push_back(&ctx);
+                                    break;
+                                case json::type::False:
+                                case json::type::Null:
+                                    current = action.pos;
+                                    break;
+                                default:
+                                    throw std::runtime_error("{{#: not implemented context type: " + utility::lexical_cast<std::string>(static_cast<int>(ctx.t())));
+                                    break;
+                            }
+                            break;
+                        }
+                        case ActionType::CloseBlock:
+                            stack.pop_back();
+                            break;
+                        default:
+                            throw std::runtime_error("not implemented " + utility::lexical_cast<std::string>(static_cast<int>(action.t)));
+                    }
+                    current++;
+                }
+                auto& fragment = fragments_[actionEnd];
+                render_fragment(fragment, indent, out);
+            }
+            void render_fragment(const std::pair<int, int> fragment, int indent, std::string& out) const
+            {
+                if (indent)
+                {
+                    for (int i = fragment.first; i < fragment.second; i++)
+                    {
+                        out += body_[i];
+                        if (body_[i] == '\n' && i + 1 != static_cast<int>(body_.size()))
+                            out.insert(out.size(), indent, ' ');
+                    }
+                }
+                else
+                    out.insert(out.size(), body_, fragment.first, fragment.second - fragment.first);
+            }
+
+        public:
+            /// Output a returnable template from this mustache template
+            rendered_template render() const
+            {
+                context empty_ctx;
+                std::vector<const context*> stack;
+                stack.emplace_back(&empty_ctx);
+
+                std::string ret;
+                render_internal(0, fragments_.size() - 1, stack, ret, 0);
+                return rendered_template(ret);
+            }
+
+            /// Apply the values from the context provided and output a returnable template from this mustache template
+            rendered_template render(const context& ctx) const
+            {
+                std::vector<const context*> stack;
+                stack.emplace_back(&ctx);
+
+                std::string ret;
+                render_internal(0, fragments_.size() - 1, stack, ret, 0);
+                return rendered_template(ret);
+            }
+
+            /// Apply the values from the context provided and output a returnable template from this mustache template
+            rendered_template render(const context&& ctx) const
+            {
+                return render(ctx);
+            }
+
+            /// Output a returnable template from this mustache template
+            std::string render_string() const
+            {
+                context empty_ctx;
+                std::vector<const context*> stack;
+                stack.emplace_back(&empty_ctx);
+
+                std::string ret;
+                render_internal(0, fragments_.size() - 1, stack, ret, 0);
+                return ret;
+            }
+
+            /// Apply the values from the context provided and output a returnable template from this mustache template
+            std::string render_string(const context& ctx) const
+            {
+                std::vector<const context*> stack;
+                stack.emplace_back(&ctx);
+
+                std::string ret;
+                render_internal(0, fragments_.size() - 1, stack, ret, 0);
+                return ret;
+            }
+
+        private:
+            void parse()
+            {
+                std::string tag_open = "{{";
+                std::string tag_close = "}}";
+
+                std::vector<int> blockPositions;
+
+                size_t current = 0;
+                while (1)
+                {
+                    size_t idx = body_.find(tag_open, current);
+                    if (idx == body_.npos)
+                    {
+                        fragments_.emplace_back(static_cast<int>(current), static_cast<int>(body_.size()));
+                        actions_.emplace_back('!', ActionType::Ignore, 0, 0);
+                        break;
+                    }
+                    fragments_.emplace_back(static_cast<int>(current), static_cast<int>(idx));
+
+                    idx += tag_open.size();
+                    size_t endIdx = body_.find(tag_close, idx);
+                    if (endIdx == idx)
+                    {
+                        throw invalid_template_exception("empty tag is not allowed");
+                    }
+                    if (endIdx == body_.npos)
+                    {
+                        // error, no matching tag
+                        throw invalid_template_exception("not matched opening tag");
+                    }
+                    current = endIdx + tag_close.size();
+                    char tag_char = body_[idx];
+                    switch (tag_char)
+                    {
+                        case '#':
+                            idx++;
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx - 1] == ' ')
+                                endIdx--;
+                            blockPositions.emplace_back(static_cast<int>(actions_.size()));
+                            actions_.emplace_back(tag_char, ActionType::OpenBlock, idx, endIdx);
+                            break;
+                        case '/':
+                            idx++;
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx - 1] == ' ')
+                                endIdx--;
+                            {
+                                if (blockPositions.empty())
+                                {
+                                    throw invalid_template_exception(
+                                             std::string("unexpected closing tag: ")
+                                             + body_.substr(idx, endIdx - idx)
+                                             );
+                                }
+                                auto& matched = actions_[blockPositions.back()];
+                                if (body_.compare(idx, endIdx - idx,
+                                                  body_, matched.start, matched.end - matched.start) != 0)
+                                {
+                                     throw invalid_template_exception(
+                                             std::string("not matched {{")
+                                             + matched.tag_char
+                                             + "{{/ pair: "
+                                             + body_.substr(matched.start, matched.end - matched.start) + ", "
+                                             + body_.substr(idx, endIdx - idx)
+                                             );
+                                }
+                                matched.pos = static_cast<int>(actions_.size());
+                                matched.has_end_match = true;
+                            }
+                            actions_.emplace_back(tag_char, ActionType::CloseBlock, idx, endIdx, blockPositions.back());
+                            blockPositions.pop_back();
+                            break;
+                        case '^':
+                            idx++;
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx - 1] == ' ')
+                                endIdx--;
+                            blockPositions.emplace_back(static_cast<int>(actions_.size()));
+                            actions_.emplace_back(tag_char, ActionType::ElseBlock, idx, endIdx);
+                            break;
+                        case '!':
+                            // do nothing action
+                            actions_.emplace_back(tag_char, ActionType::Ignore, idx + 1, endIdx);
+                            break;
+                        case '>': // partial
+                            idx++;
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx - 1] == ' ')
+                                endIdx--;
+                            actions_.emplace_back(tag_char, ActionType::Partial, idx, endIdx);
+                            break;
+                        case '{':
+                            if (tag_open != "{{" || tag_close != "}}")
+                                throw invalid_template_exception("cannot use triple mustache when delimiter changed");
+
+                            idx++;
+                            if (body_[endIdx + 2] != '}')
+                            {
+                                throw invalid_template_exception("{{{: }}} not matched");
+                            }
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx - 1] == ' ')
+                                endIdx--;
+                            actions_.emplace_back(tag_char, ActionType::UnescapeTag, idx, endIdx);
+                            current++;
+                            break;
+                        case '&':
+                            idx++;
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx - 1] == ' ')
+                                endIdx--;
+                            actions_.emplace_back(tag_char, ActionType::UnescapeTag, idx, endIdx);
+                            break;
+                        case '=':
+                            // tag itself is no-op
+                            idx++;
+                            actions_.emplace_back(tag_char, ActionType::Ignore, idx, endIdx);
+                            endIdx--;
+                            if (body_[endIdx] != '=')
+                                throw invalid_template_exception("{{=: not matching = tag: " + body_.substr(idx, endIdx - idx));
+                            endIdx--;
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx] == ' ')
+                                endIdx--;
+                            endIdx++;
+                            {
+                                bool succeeded = false;
+                                for (size_t i = idx; i < endIdx; i++)
+                                {
+                                    if (body_[i] == ' ')
+                                    {
+                                        tag_open = body_.substr(idx, i - idx);
+                                        while (body_[i] == ' ')
+                                            i++;
+                                        tag_close = body_.substr(i, endIdx - i);
+                                        if (tag_open.empty())
+                                            throw invalid_template_exception("{{=: empty open tag");
+                                        if (tag_close.empty())
+                                            throw invalid_template_exception("{{=: empty close tag");
+
+                                        if (tag_close.find(" ") != tag_close.npos)
+                                            throw invalid_template_exception("{{=: invalid open/close tag: " + tag_open + " " + tag_close);
+                                        succeeded = true;
+                                        break;
+                                    }
+                                }
+                                if (!succeeded)
+                                    throw invalid_template_exception("{{=: cannot find space between new open/close tags");
+                            }
+                            break;
+                        default:
+                            // normal tag case;
+                            while (body_[idx] == ' ')
+                                idx++;
+                            while (body_[endIdx - 1] == ' ')
+                                endIdx--;
+                            actions_.emplace_back(tag_char, ActionType::Tag, idx, endIdx);
+                            break;
+                    }
+                }
+
+                // ensure no unmatched tags
+                for (int i = 0; i < static_cast<int>(actions_.size()); i++)
+                {
+                    if (actions_[i].missing_end_pair())
+                    {
+                        throw invalid_template_exception(
+                                std::string("open tag has no matching end tag {{")
+                                + actions_[i].tag_char
+                                + " {{/ pair: "
+                                + body_.substr(actions_[i].start, actions_[i].end - actions_[i].start)
+                                );
+                    }
+                }
+
+                // removing standalones
+                for (int i = static_cast<int>(actions_.size()) - 2; i >= 0; i--)
+                {
+                    if (actions_[i].t == ActionType::Tag || actions_[i].t == ActionType::UnescapeTag)
+                        continue;
+                    auto& fragment_before = fragments_[i];
+                    auto& fragment_after = fragments_[i + 1];
+                    bool is_last_action = i == static_cast<int>(actions_.size()) - 2;
+                    bool all_space_before = true;
+                    int j, k;
+                    for (j = fragment_before.second - 1; j >= fragment_before.first; j--)
+                    {
+                        if (body_[j] != ' ')
+                        {
+                            all_space_before = false;
+                            break;
+                        }
+                    }
+                    if (all_space_before && i > 0)
+                        continue;
+                    if (!all_space_before && body_[j] != '\n')
+                        continue;
+                    bool all_space_after = true;
+                    for (k = fragment_after.first; k < static_cast<int>(body_.size()) && k < fragment_after.second; k++)
+                    {
+                        if (body_[k] != ' ')
+                        {
+                            all_space_after = false;
+                            break;
+                        }
+                    }
+                    if (all_space_after && !is_last_action)
+                        continue;
+                    if (!all_space_after &&
+                        !(
+                          body_[k] == '\n' ||
+                          (body_[k] == '\r' &&
+                           k + 1 < static_cast<int>(body_.size()) &&
+                           body_[k + 1] == '\n')))
+                        continue;
+                    if (actions_[i].t == ActionType::Partial)
+                    {
+                        actions_[i].pos = fragment_before.second - j - 1;
+                    }
+                    fragment_before.second = j + 1;
+                    if (!all_space_after)
+                    {
+                        if (body_[k] == '\n')
+                            k++;
+                        else
+                            k += 2;
+                        fragment_after.first = k;
+                    }
+                }
+            }
+
+            std::vector<std::pair<int, int>> fragments_;
+            std::vector<Action> actions_;
+            std::string body_;
+        };
+
+        /// \brief The function that compiles a source into a mustache
+        /// template.
+        inline template_t compile(const std::string& body)
+        {
+            return template_t(body);
+        }
+
+        namespace detail
+        {
+            inline std::string& get_template_base_directory_ref()
+            {
+                static std::string template_base_directory = "templates";
+                return template_base_directory;
+            }
+
+            /// A base directory not related to any blueprint
+            inline std::string& get_global_template_base_directory_ref()
+            {
+                static std::string template_base_directory = "templates";
+                return template_base_directory;
+            }
+        } // namespace detail
+
+        /// \brief The default way that \ref load, \ref load_unsafe,
+        /// \ref load_text and \ref load_text_unsafe use to read the
+        /// contents of a file.
+        inline std::string default_loader(const std::string& filename)
+        {
+            std::string path = detail::get_template_base_directory_ref();
+            std::ifstream inf(utility::join_path(path, filename));
+            if (!inf)
+            {
+                CROW_LOG_WARNING << "Template \"" << filename << "\" not found.";
+                return {};
+            }
+            return {std::istreambuf_iterator<char>(inf), std::istreambuf_iterator<char>()};
+        }
+
+        namespace detail
+        {
+            inline std::function<std::string(std::string)>& get_loader_ref()
+            {
+                static std::function<std::string(std::string)> loader = default_loader;
+                return loader;
+            }
+        } // namespace detail
+
+        /// \brief Defines the templates directory path at **route
+        /// level**. By default is `templates/`.
+        inline void set_base(const std::string& path)
+        {
+            auto& base = detail::get_template_base_directory_ref();
+            base = path;
+            if (base.back() != '\\' &&
+                base.back() != '/')
+            {
+                base += '/';
+            }
+        }
+
+        /// \brief Defines the templates directory path at **global
+        /// level**. By default is `templates/`.
+        inline void set_global_base(const std::string& path)
+        {
+            auto& base = detail::get_global_template_base_directory_ref();
+            base = path;
+            if (base.back() != '\\' &&
+                base.back() != '/')
+            {
+                base += '/';
+            }
+        }
+
+        /// \brief Change the way that \ref load, \ref load_unsafe,
+        /// \ref load_text and \ref load_text_unsafe reads a file.
+        ///
+        /// By default, the previously mentioned functions load files
+        /// using \ref default_loader, that only reads a file and
+        /// returns a std::string.
+        inline void set_loader(std::function<std::string(std::string)> loader)
+        {
+            detail::get_loader_ref() = std::move(loader);
+        }
+
+        /// \brief Open, read and sanitize a file but returns a
+        /// std::string without a previous rendering process.
+        ///
+        /// Except for the **sanitize process** this function does the
+        /// almost the same thing that \ref load_text_unsafe.
+        inline std::string load_text(const std::string& filename)
+        {
+            std::string filename_sanitized(filename);
+            utility::sanitize_filename(filename_sanitized);
+            return detail::get_loader_ref()(filename_sanitized);
+        }
+
+        /// \brief Open and read a file but returns a std::string
+        /// without a previous rendering process.
+        ///
+        /// This function is more like a helper to reduce code like
+        /// this...
+        ///
+        /// ```cpp
+        /// std::ifstream file("home.html");
+        /// return std::string({std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()});
+        /// ```
+        ///
+        /// ... Into this...
+        ///
+        /// ```cpp
+        /// return load("home.html");
+        /// ```
+        ///
+        /// \warning Usually \ref load_text is more recommended to use
+        /// instead because it may prevent some [XSS Attacks](https://en.wikipedia.org/wiki/Cross-site_scripting).
+        /// **Never blindly trust your users!**
+        inline std::string load_text_unsafe(const std::string& filename)
+        {
+            return detail::get_loader_ref()(filename);
+        }
+
+        /// \brief Open, read and renders a file using a mustache
+        /// compiler. It also sanitize the input before compilation.
+        inline template_t load(const std::string& filename)
+        {
+            std::string filename_sanitized(filename);
+            utility::sanitize_filename(filename_sanitized);
+            return compile(detail::get_loader_ref()(filename_sanitized));
+        }
+
+        /// \brief Open, read and renders a file using a mustache
+        /// compiler. But it **do not** sanitize the input before
+        /// compilation.
+        ///
+        /// \warning Usually \ref load is more recommended to use
+        /// instead because it may prevent some [XSS Attacks](https://en.wikipedia.org/wiki/Cross-site_scripting).
+        /// **Never blindly trust your users!**
+        inline template_t load_unsafe(const std::string& filename)
+        {
+            return compile(detail::get_loader_ref()(filename));
+        }
+    } // namespace mustache
+} // namespace crow
+
 
 #include <cstdint>
+#include <limits>
 #include <utility>
 #include <tuple>
 #include <unordered_map>
@@ -12390,7 +12405,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
 namespace crow // NOTE: Already documented in "crow/app.h"
 {
 
-    constexpr const uint16_t INVALID_BP_ID{((uint16_t)-1)};
+    constexpr size_t INVALID_BP_ID{SIZE_MAX};
 
     namespace detail
     {
@@ -13085,8 +13100,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
         std::function<void(crow::request&, crow::response&, Args...)> handler_;
     };
 
-    const int RULE_SPECIAL_REDIRECT_SLASH = 1;
-
+    constexpr size_t RULE_SPECIAL_REDIRECT_SLASH = 1;
 
     /// A search tree.
     class Trie
@@ -13094,9 +13108,9 @@ namespace crow // NOTE: Already documented in "crow/app.h"
     public:
         struct Node
         {
-            uint16_t rule_index{};
+            size_t rule_index{};
             // Assign the index to the maximum 32 unsigned integer value by default so that any other number (specifically 0) is a valid BP id.
-            uint16_t blueprint_index{INVALID_BP_ID};
+            size_t blueprint_index{INVALID_BP_ID};
             std::string key;
             ParamType param = ParamType::MAX; // MAX = No param.
             std::vector<Node> children;
@@ -13219,19 +13233,19 @@ namespace crow // NOTE: Already documented in "crow/app.h"
         }
 
         //Rule_index, Blueprint_index, routing_params
-        routing_handle_result find(const std::string& req_url, const Node& node, unsigned pos = 0, routing_params* params = nullptr, std::vector<uint16_t>* blueprints = nullptr) const
+        routing_handle_result find(const std::string& req_url, const Node& node, size_t pos = 0, routing_params* params = nullptr, std::vector<size_t>* blueprints = nullptr) const
         {
             //start params as an empty struct
             routing_params empty;
             if (params == nullptr)
                 params = &empty;
             //same for blueprint vector
-            std::vector<uint16_t> MT;
+            std::vector<size_t> MT;
             if (blueprints == nullptr)
                 blueprints = &MT;
 
-            uint16_t found{};               //The rule index to be found
-            std::vector<uint16_t> found_BP; //The Blueprint indices to be found
+            size_t found{};               //The rule index to be found
+            std::vector<size_t> found_BP; //The Blueprint indices to be found
             routing_params match_params;    //supposedly the final matched parameters
 
             auto update_found = [&found, &found_BP, &match_params](routing_handle_result& ret) {
@@ -13383,7 +13397,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
         }
 
         //This functions assumes any blueprint info passed is valid
-        void add(const std::string& url, uint16_t rule_index, unsigned bp_prefix_length = 0, uint16_t blueprint_index = INVALID_BP_ID)
+        void add(const std::string& url, size_t rule_index, unsigned bp_prefix_length = 0, size_t blueprint_index = INVALID_BP_ID)
         {
             auto idx = &head_;
 
@@ -13668,7 +13682,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
             internal_add_rule_object(rule, ruleObject, INVALID_BP_ID, blueprints_);
         }
 
-        void internal_add_rule_object(const std::string& rule, BaseRule* ruleObject, const uint16_t& BP_index, std::vector<Blueprint*>& blueprints)
+        void internal_add_rule_object(const std::string& rule, BaseRule* ruleObject, const size_t& BP_index, std::vector<Blueprint*>& blueprints)
         {
             bool has_trailing_slash = false;
             std::string rule_without_trailing_slash;
@@ -13683,7 +13697,9 @@ namespace crow // NOTE: Already documented in "crow/app.h"
 
             ruleObject->foreach_method([&](int method) {
                 per_methods_[method].rules.emplace_back(ruleObject);
-                per_methods_[method].trie.add(rule, per_methods_[method].rules.size() - 1, BP_index != INVALID_BP_ID ? blueprints[BP_index]->prefix().length() : 0, BP_index);
+                per_methods_[method].trie.add(rule, per_methods_[method].rules.size() - 1,
+                    BP_index != INVALID_BP_ID ? blueprints[BP_index]->prefix().length() : 0,
+                    BP_index);
 
                 // directory case:
                 //   request to '/about' url matches '/about/' rule
@@ -13801,7 +13817,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
 
             auto& per_method = per_methods_[static_cast<int>(req.method)];
             auto& rules = per_method.rules;
-            unsigned rule_index = per_method.trie.find(req.url).rule_index;
+            size_t rule_index = per_method.trie.find(req.url).rule_index;
 
             if (!rule_index)
             {
@@ -13850,7 +13866,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
             }
         }
 
-        void get_found_bp(const std::vector<uint16_t>& bp_i, const std::vector<Blueprint*>& blueprints, std::vector<Blueprint*>& found_bps, uint16_t index = 0)
+        void get_found_bp(const std::vector<size_t>& bp_i, const std::vector<Blueprint*>& blueprints, std::vector<Blueprint*>& found_bps, size_t index = 0)
         {
             // This statement makes 3 assertions:
             // 1. The index is above 0.
@@ -13894,11 +13910,12 @@ namespace crow // NOTE: Already documented in "crow/app.h"
         CatchallRule& get_catch_all(const routing_handle_result& found) {
             std::vector<Blueprint*> bps_found;
             get_found_bp(found.blueprint_indices, blueprints_, bps_found);
-            for (int i = bps_found.size() - 1; i > 0; i--)
-            {
-                std::vector<uint16_t> bpi = found.blueprint_indices;
-                if (bps_found[i]->catchall_rule().has_handler()) {
-                    return bps_found[i]->catchall_rule();
+            if (!bps_found.empty()) {
+                for (size_t i = bps_found.size() - 1; i > 0; i--)
+                {
+                    if (bps_found[i]->catchall_rule().has_handler()) {
+                        return bps_found[i]->catchall_rule();
+                    }
                 }
             }
             return catchall_rule_;
@@ -13910,20 +13927,17 @@ namespace crow // NOTE: Already documented in "crow/app.h"
 
             std::vector<Blueprint*> bps_found;
             get_found_bp(found.blueprint_indices, blueprints_, bps_found);
-            for (int i = bps_found.size() - 1; i > 0; i--)
-            {
-                std::vector<uint16_t> bpi = found.blueprint_indices;
-                if (bps_found[i]->catchall_rule().has_handler())
-                {
+            if (!bps_found.empty()) {
+                for (size_t i = bps_found.size() - 1; i > 0; i--) {
+                    if (bps_found[i]->catchall_rule().has_handler()) {
 #ifdef CROW_ENABLE_DEBUG
-                    return std::string("Redirected to Blueprint \"" + bps_found[i]->prefix() + "\" Catchall rule");
+                        return std::string("Redirected to Blueprint \"" + bps_found[i]->prefix() + "\" Catchall rule");
 #else
-                    return EMPTY;
+                        return EMPTY;
 #endif
+                    }
                 }
-            }
-            if (catchall_rule_.has_handler())
-            {
+            } else  if (catchall_rule_.has_handler()) {
 #ifdef CROW_ENABLE_DEBUG
                 return std::string("Redirected to global Catchall rule");
 #else
@@ -13940,7 +13954,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
             std::unique_ptr<routing_handle_result> found{
               new routing_handle_result(
                 0,
-                std::vector<uint16_t>(),
+                std::vector<size_t>(),
                 routing_params(),
                 HTTPMethod::InternalMethodCount)}; // This is always returned to avoid a null pointer dereference.
 
@@ -14082,7 +14096,7 @@ namespace crow // NOTE: Already documented in "crow/app.h"
             } else {
                 HTTPMethod method_actual = found.method;
                 const auto& rules = per_methods_[static_cast<int>(method_actual)].rules;
-                const unsigned rule_index = found.rule_index;
+                const size_t rule_index = found.rule_index;
 
                 if (rule_index >= rules.size())
                     throw std::runtime_error("Trie internal structure corrupted!");
@@ -15057,6 +15071,7 @@ namespace crow
 
         void close_websockets()
         {
+            std::lock_guard<std::mutex> lock{websockets_mutex_};
             for (auto websocket : websockets_)
             {
                 CROW_LOG_INFO << "Quitting Websocket: " << websocket;
@@ -15067,11 +15082,13 @@ namespace crow
 
         void add_websocket(std::shared_ptr<websocket::connection> conn)
         {
+            std::lock_guard<std::mutex> lock{websockets_mutex_};
             websockets_.push_back(conn);
         }
 
         void remove_websocket(std::shared_ptr<websocket::connection> conn)
         {
+            std::lock_guard<std::mutex> lock{websockets_mutex_};
             websockets_.erase(std::remove(websockets_.begin(), websockets_.end(), conn), websockets_.end());
         }
 
@@ -15284,6 +15301,7 @@ namespace crow
         bool server_started_{false};
         std::condition_variable cv_started_;
         std::mutex start_mutex_;
+        std::mutex websockets_mutex_; ///< \brief mutex to protect websockets_
         std::vector<std::shared_ptr<websocket::connection>> websockets_;
     };
 

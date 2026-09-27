@@ -6,7 +6,6 @@
 #define CROW_DISABLE_STATIC_DIR
 #define CROW_ENABLE_COMPRESSION
 #define CROW_ENABLE_SSL
-#define CROW_STATIC_DIRECTORY "static/"
 
 #include "crow_all.h"
 
